@@ -112,8 +112,12 @@
     grid-template-columns:1fr 1fr;
     gap:10px;
   }
+  /* 窄 viewport 或手機模擬器 → 單欄 */
   @media(max-width:600px){
     #cl-match-list{ grid-template-columns:1fr; }
+  }
+  body.phone-mode #cl-match-list{
+    grid-template-columns:1fr;
   }
   .match-item{
     background:#fff;border-radius:14px;
@@ -150,10 +154,17 @@
   }
   .mi-team-name{
     font-size:14px;font-weight:700;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  /* 單欄模式（手機模擬器 或 窄 viewport）→ 允許換行 */
+  body.phone-mode .mi-team-name{
     white-space:normal;word-break:break-word;
   }
+  @media(max-width:600px){
+    .mi-team-name{ white-space:normal;word-break:break-word; }
+  }
   .mi-team-name.winner{color:var(--green-dark);}
-  .mi-team-id{font-size:11px;color:var(--muted);word-break:break-all;}
+  .mi-team-id{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .mi-vs{flex-shrink:0;font-size:12px;font-weight:700;color:#ccc;}
   .mi-score{flex-shrink:0;text-align:center;min-width:72px;}
   .mi-score-pills{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;}
