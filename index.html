@@ -1051,7 +1051,8 @@ function renderMatchItem(m, i) {
   const winnerA = m._scored && m.winner===m.teamA;
   const winnerB = m._scored && m.winner===m.teamB;
 
-  const onclick = scored ? '' : `onclick="startFromSchedule(${i})"`;
+  const locked = !!m._locked;
+  const onclick = (scored || locked) ? '' : `onclick="startFromSchedule(${i})"`;
   return `
   <div class="match-item ${scored?'scored':''}" data-court="${m.court}" ${onclick}>
     <div class="mi-top">
@@ -1059,9 +1060,11 @@ function renderMatchItem(m, i) {
         <span class="mi-tag ${typeCls}">${typeLabel}</span>
         <span class="mi-tag">${matchNo}</span>
       </div>
-      ${scored
-        ? `<span class="mi-status-done">✅ 已完成</span>`
-        : `<span class="mi-status-pending">⏳ 待輸入</span>`}
+      ${locked
+        ? `<span class="mi-status-done">🔒 NTCPA 鎖定</span>`
+        : scored
+          ? `<span class="mi-status-done">✅ 已完成</span>`
+          : `<span class="mi-status-pending">⏳ 待輸入</span>`}
     </div>
     <div class="mi-matchup">
       <div class="mi-team">${_teamLines(m.teamA, winnerA, '🟠')}</div>
@@ -1210,6 +1213,7 @@ function qsConfirm(){
 
   if(qs.matchIdx!==null && scheduleMatches[qs.matchIdx]){
     const sm=scheduleMatches[qs.matchIdx];
+    if (sm._locked) { showToast('🔒 此比賽已被 NTCPA 鎖定，無法修改'); return; }
     sm._scored=true; sm.games=gamesObj;
     sm.numGames=qs.games.length; sm.winner=payload.winner;
     saveSchedule(); // 比分寫回賽程，立刻持久化
@@ -1255,6 +1259,7 @@ function startFromSchedule(rawIdx) {
   const courtMatches = scheduleMatches.filter(m=>m.court===st.court);
   const m = courtMatches[rawIdx];
   if (!m || m._scored) return;
+  if (m._locked) { showToast('🔒 此比賽已被 NTCPA 鎖定，無法修改'); return; }
 
   st.prefillIdx = scheduleMatches.indexOf(m);
 
@@ -1949,6 +1954,7 @@ restoreSchedule();
           numGames: 1,
           winner,
           _scored,
+          _locked:  !!m.locked,
           _ntcpaId: m.id    // 保留 NTCPA match ID，供寫回 Firebase 使用
         };
       });
@@ -1970,7 +1976,7 @@ restoreSchedule();
     // 暴露 db 供 submitScore() 寫回使用
     window._fbDb = db;
 
-    // ── 監聽 NTCPA 廣播通知（顯示 5 秒 toast）──
+    // ── 監聽 NTCPA 廣播通知 ──
     window._notifyRef = db.ref(`ntcpa/venues/${VENUE_ID}/notify`);
     let _notifyReady = false;
     window._notifyRef.limitToLast(1).on('value', snap => {
@@ -1978,7 +1984,25 @@ restoreSchedule();
       snap.forEach(child => {
         const d = child.val();
         if (!d || d.did === window._dslDeviceId) return;
-        window.showDslToast(d.msg, 5000);
+
+        if (d.action !== 'lockScore') { window.showDslToast(d.msg, 5000); return; }
+
+        // 判斷本裝置是否正在輸入同一場次
+        const secQuick = document.getElementById('sec-quick');
+        const onInput  = secQuick && secQuick.classList.contains('active');
+        const isSame   = onInput && qs.m && qs.m._ntcpaId != null
+                         && d.matchId != null && qs.m._ntcpaId === d.matchId;
+
+        if (isSame) {
+          // 正在輸入該場次 → 強制退回場地列表，阻止送出
+          window.showDslToast('🔒 此比賽已被 NTCPA 鎖定，已強制退回', 5000);
+          backToCourtList();
+        } else {
+          // 其他頁面 → 顯示通知並切到成績排名頁該場地
+          window.showDslToast(d.msg, 5000);
+          switchTab('view');
+          if (d.court) setRkCourt(String(d.court));
+        }
       });
     });
 
