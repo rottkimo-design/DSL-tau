@@ -560,6 +560,39 @@
   body.phone-mode .page{
     max-width:390px;
   }
+/* ── 成績排名 ── */
+.rk-court-btn {
+  padding: 6px 14px; border-radius: 999px; border: 1.5px solid #e0e0e0;
+  background: #fff; cursor: pointer; font-size: 13px; font-weight: 600;
+  color: #555; font-family: inherit; transition: all .15s;
+}
+.rk-court-btn.active { background: var(--green); color: #fff; border-color: var(--green); }
+.rk-table { width: 100%; border-collapse: collapse; background: #fff;
+  border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+.rk-table th {
+  background: #f5f7fa; padding: 10px 12px; font-size: 12px; font-weight: 700;
+  color: #7f8c8d; text-align: center; border-bottom: 1px solid #eee; letter-spacing: .3px;
+}
+.rk-table th:nth-child(2) { text-align: left; }
+.rk-table td {
+  padding: 12px 12px; font-size: 14px; color: var(--text);
+  text-align: center; border-bottom: 1px solid #f0f0f0;
+}
+.rk-table td:nth-child(2) { text-align: left; font-weight: 600; }
+.rk-table tr:last-child td { border-bottom: none; }
+.rk-table tr:nth-child(1) td { background: rgba(255,215,0,.08); }
+.rk-table tr:nth-child(2) td { background: rgba(192,192,192,.06); }
+.rk-table tr:nth-child(3) td { background: rgba(205,127,50,.05); }
+.rk-rank { display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:50%;font-weight:800;font-size:13px; }
+.rk-rank.gold   { background:#ffd700;color:#7a5c00; }
+.rk-rank.silver { background:#d0d0d0;color:#555; }
+.rk-rank.bronze { background:#cd7f32;color:#fff; }
+.rk-rank.other  { background:#f0f0f0;color:#888; }
+.rk-diff-pos { color: var(--green-dark); font-weight: 700; }
+.rk-diff-neg { color: var(--red); font-weight: 700; }
+.rk-no-data { text-align:center;padding:40px 20px;color:var(--muted);font-size:14px; }
+
 /* ── Score notification toast ── */
 #dsl-notify {
   display: none;
@@ -595,7 +628,7 @@
   </div>
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-record" onclick="switchTab('record')">📝 登記</button>
-    <button class="tab-btn"        id="tab-view"   onclick="switchTab('view')">📋 查看</button>
+    <button class="tab-btn"        id="tab-view"   onclick="switchTab('view')">📊 成績</button>
   </div>
 </div>
 
@@ -932,35 +965,16 @@
 
 </div><!-- #page-record -->
 
-<!-- ══════════ PAGE: 查看 ══════════ -->
+<!-- ══════════ PAGE: 成績排名 ══════════ -->
 <div class="page" id="page-view">
-  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('csv-file-input').click()"
-       ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)">
-    <div class="drop-zone-icon">📂</div>
-    <div class="drop-zone-text">點擊或拖放 CSV 檔案</div>
-    <div class="drop-zone-sub">支援 DUPR 標準格式（含 [Court:N] 場地標記）</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;padding:0 2px;">
+    <button class="rk-court-btn active" data-court="all" onclick="setRkCourt('all')">全部</button>
+    <button class="rk-court-btn" data-court="1" onclick="setRkCourt('1')">🔴 場地 1</button>
+    <button class="rk-court-btn" data-court="2" onclick="setRkCourt('2')">🔵 場地 2</button>
+    <button class="rk-court-btn" data-court="3" onclick="setRkCourt('3')">🟢 場地 3</button>
+    <button class="rk-court-btn" data-court="4" onclick="setRkCourt('4')">🟠 場地 4</button>
   </div>
-  <input type="file" id="csv-file-input" accept=".csv" onchange="loadCSVFile(event)">
-
-  <div class="import-stats" id="import-stats" style="display:none">
-    <div class="stat-item"><div class="stat-num" id="stat-total">0</div><div class="stat-lbl">總場數</div></div>
-    <div class="stat-item"><div class="stat-num" id="stat-singles">0</div><div class="stat-lbl">單打</div></div>
-    <div class="stat-item"><div class="stat-num" id="stat-doubles">0</div><div class="stat-lbl">雙打</div></div>
-    <div class="stat-item"><div class="stat-num" id="stat-date">—</div><div class="stat-lbl">日期</div></div>
-  </div>
-
-  <div class="court-tabs" id="view-court-tabs" style="display:none">
-    <button class="ct-btn active" data-court="all" onclick="filterCourt('all')">全部 <span class="ct-count" id="ct-count-all">0</span></button>
-    <button class="ct-btn" data-court="1" onclick="filterCourt('1')">🔴 場地 1 <span class="ct-count" id="ct-count-1">0</span></button>
-    <button class="ct-btn" data-court="2" onclick="filterCourt('2')">🔵 場地 2 <span class="ct-count" id="ct-count-2">0</span></button>
-    <button class="ct-btn" data-court="3" onclick="filterCourt('3')">🟢 場地 3 <span class="ct-count" id="ct-count-3">0</span></button>
-    <button class="ct-btn" data-court="4" onclick="filterCourt('4')">🟠 場地 4 <span class="ct-count" id="ct-count-4">0</span></button>
-    <button class="ct-btn" data-court="0" onclick="filterCourt('0')" id="ct-btn-unassigned" style="display:none">⬜ 未分配 <span class="ct-count" id="ct-count-0">0</span></button>
-  </div>
-
-  <div class="match-list" id="view-match-list">
-    <div class="no-matches" id="view-empty"><div style="font-size:40px;margin-bottom:10px">📋</div><div>尚未匯入比賽資料<br>請上傳 DUPR CSV 檔案</div></div>
-  </div>
+  <div id="ranking-wrap"></div>
 </div>
 
 </div><!-- #app-root -->
@@ -1829,68 +1843,75 @@ function autoLoadView(){
     renderViewTab();
   }
 }
-function renderViewTab(){
-  const counts={all:viewMatches.length,1:0,2:0,3:0,4:0,0:0};
-  viewMatches.forEach(m=>{const c=m.court;counts[c]=(counts[c]||0)+1;});
-  const singles=viewMatches.filter(m=>m.type==='singles').length;
-  document.getElementById('stat-total').textContent=viewMatches.length;
-  document.getElementById('stat-singles').textContent=singles;
-  document.getElementById('stat-doubles').textContent=viewMatches.length-singles;
-  const dates=[...new Set(viewMatches.map(m=>m.date))].sort();
-  document.getElementById('stat-date').textContent=dates.length?dates.at(-1):'—';
-  document.getElementById('import-stats').style.display='';
-  ['all','1','2','3','4','0'].forEach(c=>{
-    const el=document.getElementById('ct-count-'+c);
-    if(el)el.textContent=counts[c]||0;
-  });
-  document.getElementById('ct-btn-unassigned').style.display=counts[0]>0?'':'none';
-  document.getElementById('view-court-tabs').style.display='';
-  filterCourt(activeCourtFilter);
+/* ── 成績排名 ── */
+let _rkCourt = 'all';
+
+function setRkCourt(c) {
+  _rkCourt = c;
+  document.querySelectorAll('.rk-court-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.court === c));
+  renderViewTab();
 }
-function filterCourt(court){
-  activeCourtFilter=court;
-  document.querySelectorAll('.ct-btn').forEach(b=>b.classList.toggle('active',b.dataset.court===court));
-  const filtered=court==='all'?viewMatches:viewMatches.filter(m=>String(m.court)===court);
-  const list=document.getElementById('view-match-list');
-  if(!filtered.length){
-    list.innerHTML=`<div class="no-matches"><div style="font-size:32px;margin-bottom:8px">🎾</div><div>此場地沒有比賽記錄</div></div>`;
+
+function renderViewTab() {
+  const matches = _rkCourt === 'all'
+    ? scheduleMatches
+    : scheduleMatches.filter(m => String(m.court) === _rkCourt);
+
+  const scored = matches.filter(m => m._scored);
+  const wrap = document.getElementById('ranking-wrap');
+  if (!wrap) return;
+
+  if (!scored.length) {
+    wrap.innerHTML = `<div class="rk-no-data">📊<br><br>尚無已完成的比賽<br>等待分數輸入後自動更新</div>`;
     return;
   }
-  list.innerHTML=filtered.map(m=>renderViewCard(m)).join('');
-}
-function renderViewCard(m){
-  const c=m.court||0;
-  const courtLabel=c?`場地 ${c}`:'未分配';
-  const typeLabel=m.type==='doubles'?'雙打':'單打';
-  const isWinnerA=m.winner===m.teamA;
-  const pills=Object.entries(m.games).map(([g,sc])=>{
-    const cls=sc.a>sc.b?'win-a':'win-b';
-    return`<span class="mc-game ${cls}">${sc.a}:${sc.b}</span>`;
-  }).join('');
-  const idA=m.type==='doubles'?[m.playerA1DuprId,m.playerA2DuprId].filter(Boolean).join(' / '):m.playerA1DuprId;
-  const idB=m.type==='doubles'?[m.playerB1DuprId,m.playerB2DuprId].filter(Boolean).join(' / '):m.playerB1DuprId;
-  return`
-  <div class="match-card court-${c}">
-    <div class="mc-header">
-      <div class="mc-tags">
-        <span class="mc-tag court">${courtLabel}</span>
-        <span class="mc-tag type-${m.type==='doubles'?'d':'s'}">${typeLabel}</span>
-        ${m.scoreType?`<span class="mc-tag">${m.scoreType}</span>`:''}
-      </div>
-      <span class="mc-date">${m.date}</span>
-    </div>
-    <div class="mc-matchup">
-      <div class="mc-team ${isWinnerA?'winner':''}">
-        <div class="mc-team-name">🟠 ${m.teamA}${isWinnerA?' 🏆':''}</div>
-        ${idA?`<div class="mc-team-id">${idA}</div>`:''}
-      </div>
-      <div class="mc-score-block"><div class="mc-scores">${pills}</div></div>
-      <div class="mc-team ${!isWinnerA?'winner':''}" style="text-align:right">
-        <div class="mc-team-name">${!isWinnerA?'🏆 ':''}🔵 ${m.teamB}</div>
-        ${idB?`<div class="mc-team-id">${idB}</div>`:''}
-      </div>
-    </div>
-  </div>`;
+
+  // 累積每位選手成績
+  const stats = {};
+  scored.forEach(m => {
+    const g1 = m.games && m.games[1] ? m.games[1] : {a:0,b:0};
+    const aScore = g1.a || 0, bScore = g1.b || 0;
+    const aWin = aScore > bScore;
+
+    const addPlayer = (name, scored, lost, won) => {
+      if (!name) return;
+      if (!stats[name]) stats[name] = {wins:0, losses:0, pf:0, pa:0};
+      stats[name].pf += scored;
+      stats[name].pa += lost;
+      if (won) stats[name].wins++; else stats[name].losses++;
+    };
+
+    [m.playerA1, m.playerA2].forEach(p => addPlayer(p, aScore, bScore, aWin));
+    [m.playerB1, m.playerB2].forEach(p => addPlayer(p, bScore, aScore, !aWin));
+  });
+
+  const rows = Object.entries(stats)
+    .map(([name, s]) => ({name, ...s, diff: s.pf - s.pa}))
+    .sort((a, b) => b.wins - a.wins || b.diff - a.diff);
+
+  const medalCls = i => ['gold','silver','bronze'][i] ?? 'other';
+  const diffHtml = d => d > 0
+    ? `<span class="rk-diff-pos">+${d}</span>`
+    : d < 0 ? `<span class="rk-diff-neg">${d}</span>` : `<span style="color:#aaa">0</span>`;
+
+  wrap.innerHTML = `
+    <table class="rk-table">
+      <thead><tr>
+        <th>名次</th><th>選手</th><th>勝</th><th>負</th><th>得分</th><th>失分</th><th>分差</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map((r,i) => `<tr>
+          <td><span class="rk-rank ${medalCls(i)}">${i+1}</span></td>
+          <td>${r.name}</td>
+          <td style="color:var(--green-dark);font-weight:700">${r.wins}</td>
+          <td style="color:var(--red)">${r.losses}</td>
+          <td>${r.pf}</td>
+          <td>${r.pa}</td>
+          <td>${diffHtml(r.diff)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
 }
 
 /* ── Toast ── */
@@ -1902,9 +1923,7 @@ function showToast(msg){
   toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-document.getElementById('tab-view').addEventListener('click',()=>{
-  if(!viewMatches.length)autoLoadView();
-});
+document.getElementById('tab-view').addEventListener('click', renderViewTab);
 
 /* ═══════════════════════════════════════
    SCHEDULE PERSISTENCE（重整後保留）
