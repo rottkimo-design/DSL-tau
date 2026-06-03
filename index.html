@@ -1195,6 +1195,8 @@ function qsConfirm(){
   });
   const aWins=qs.games.filter(g=>g.side==='a').length;
   const bWins=qs.games.filter(g=>g.side==='b').length;
+  const aScore = gamesObj[1] ? (gamesObj[1].a||0) : 0;
+  const bScore = gamesObj[1] ? (gamesObj[1].b||0) : 0;
 
   const payload={
     court:st.court, type:m.type, scoreType:m.scoreType||'SIDEOUT',
@@ -1213,37 +1215,31 @@ function qsConfirm(){
   if(qs.matchIdx!==null && scheduleMatches[qs.matchIdx]){
     const sm=scheduleMatches[qs.matchIdx];
     if (sm._locked) { showToast('🔒 此比賽已被 NTCPA 鎖定，無法修改'); return; }
-    sm._scored=true; sm.games=gamesObj;
-    sm.numGames=qs.games.length; sm.winner=payload.winner;
-    saveSchedule(); // 比分寫回賽程，立刻持久化
 
-    // ── 寫回 Firebase → NTCPA DUPR Score 即時更新 ──
-    if(sm._ntcpaId != null && window._fbDb && window._ntcpaMatchIdx){
-      const fbIdx = window._ntcpaMatchIdx[sm._ntcpaId];
-      if(fbIdx !== undefined){
-        const aScore = gamesObj[1] ? (gamesObj[1].a || 0) : 0;
-        const bScore = gamesObj[1] ? (gamesObj[1].b || 0) : 0;
-        window._fbDb
-          .ref(`ntcpa/venues/${window._ntcpaVenueId}/data/matches/${fbIdx}`)
-          .update({ aScore, bScore })
-          .catch(err => console.warn('Firebase write-back failed:', err));
+    // ── 跳場偵測：同場地內是否有更早的未完成場次 ──
+    const courtMatches = scheduleMatches.filter(x => x.court === st.court);
+    const currentIdx   = courtMatches.findIndex(x => x._ntcpaId === sm._ntcpaId);
+    const skipped      = currentIdx > 0
+      ? courtMatches.slice(0, currentIdx).filter(x => !x._scored && !x._locked)
+      : [];
 
-        // ── 廣播通知到 NTCPA ──
-        const winnerTeam = aWins > bWins ? m.teamA : m.teamB;
-        const notifyMsg = `🏆 Court ${st.court} · 第 ${(qs.matchIdx||0)+1} 場\n${m.teamA} ${aScore} : ${bScore} ${m.teamB}\n🥇 勝隊：${winnerTeam}`;
-        if (window._notifyRef) {
-          window._notifyRef.push({ msg: notifyMsg, ts: Date.now(), did: window._dslDeviceId }).catch(()=>{});
-        }
-        window.showDslToast(notifyMsg, 5000); // 也在 DSL 自己畫面顯示
-      }
+    if (skipped.length > 0) {
+      requestNtcpaApproval({
+        sm, gamesObj, aScore, bScore, aWins, bWins, m, payload,
+        skippedNums: skipped.map(x => x.num).filter(Boolean)
+      });
+      return;
     }
+
+    doSubmitScore({ sm, gamesObj, aScore, bScore, aWins, bWins, m, payload });
+    return;
   }
 
+  // fallback：無 sm（手動輸入），直接存 history
   const history=JSON.parse(localStorage.getItem('mcvs_matches')||'[]');
   history.unshift(payload);
   localStorage.setItem('mcvs_matches',JSON.stringify(history.slice(0,200)));
   st._last=payload;
-
   document.getElementById('success-detail').textContent=`場地 ${st.court}　${m.teamA} vs ${m.teamB}`;
   showSec('success');
   startSuccessCountdown();
@@ -1368,6 +1364,91 @@ function backToCourtList() {
   if (st.court && scheduleMatches.some(m=>m.court===st.court)) {
     showCourtList(st.court, scheduleMatches.filter(m=>m.court===st.court));
   } else showSec('home');
+}
+
+// ── 實際寫入分數（已核准或不需核准時呼叫）──────────────────────
+function doSubmitScore({ sm, gamesObj, aScore, bScore, aWins, bWins, m, payload }) {
+  sm._scored=true; sm.games=gamesObj;
+  sm.numGames=payload.numGames; sm.winner=payload.winner;
+  saveSchedule();
+
+  if(sm._ntcpaId != null && window._fbDb && window._ntcpaMatchIdx){
+    const fbIdx = window._ntcpaMatchIdx[sm._ntcpaId];
+    if(fbIdx !== undefined){
+      window._fbDb
+        .ref(`ntcpa/venues/${window._ntcpaVenueId}/data/matches/${fbIdx}`)
+        .update({ aScore, bScore })
+        .catch(err => console.warn('Firebase write-back failed:', err));
+
+      const winnerTeam = aWins > bWins ? m.teamA : m.teamB;
+      const notifyMsg = `🏆 Court ${st.court} · 第 ${sm.num||'?'} 場\n${m.teamA} ${aScore} : ${bScore} ${m.teamB}\n🥇 勝隊：${winnerTeam}`;
+      if (window._notifyRef) {
+        window._notifyRef.push({ msg: notifyMsg, ts: Date.now(), did: window._dslDeviceId }).catch(()=>{});
+      }
+      window.showDslToast(notifyMsg, 5000);
+    }
+  }
+
+  const history=JSON.parse(localStorage.getItem('mcvs_matches')||'[]');
+  history.unshift(payload);
+  localStorage.setItem('mcvs_matches',JSON.stringify(history.slice(0,200)));
+  st._last=payload;
+
+  // 還原 success section 標題（若曾被等候畫面改過）
+  const iconEl  = document.querySelector('#sec-success .success-icon');
+  const titleEl = document.querySelector('#sec-success .success-title');
+  if (iconEl)  iconEl.textContent  = '🎉';
+  if (titleEl) titleEl.textContent = '登記成功！';
+  document.getElementById('success-detail').textContent=`場地 ${st.court}　${m.teamA} vs ${m.teamB}`;
+  showSec('success');
+  startSuccessCountdown();
+}
+
+// ── 跳場核准申請：送出 Firebase 請求，等候 NTCPA 回應 ───────────
+function requestNtcpaApproval({ sm, gamesObj, aScore, bScore, aWins, bWins, m, payload, skippedNums }) {
+  // 顯示「等候核准」畫面（借用 success section）
+  const iconEl  = document.querySelector('#sec-success .success-icon');
+  const titleEl = document.querySelector('#sec-success .success-title');
+  if (iconEl)  iconEl.textContent  = '⏳';
+  if (titleEl) titleEl.textContent = '等候 NTCPA 核准…';
+  document.getElementById('success-detail').textContent =
+    `場地 ${st.court} · 第 ${sm.num||'?'} 場　${m.teamA} ${aScore}:${bScore} ${m.teamB}`;
+  document.getElementById('success-countdown').textContent = '跳場申請已送出，請等候 NTCPA 核准';
+  showSec('success');
+
+  if (!window._fbDb || !window._ntcpaVenueId) {
+    showToast('❌ 無法連線，請重試'); backToCourtList(); return;
+  }
+
+  const reqRef = window._fbDb
+    .ref(`ntcpa/venues/${window._ntcpaVenueId}/approval_requests`)
+    .push();
+
+  reqRef.set({
+    status: 'pending',
+    court:  st.court,
+    matchNum: sm.num || 0,
+    skippedNums: skippedNums || [],
+    matchId: sm._ntcpaId,
+    teamA: m.teamA, teamB: m.teamB,
+    aScore, bScore,
+    ts: Date.now(),
+    did: window._dslDeviceId
+  }).catch(() => { showToast('❌ 送出申請失敗'); backToCourtList(); });
+
+  reqRef.on('value', snap => {
+    const d = snap.val();
+    if (!d || d.status === 'pending') return;
+    reqRef.off();
+    if (d.status === 'approved') {
+      doSubmitScore({ sm, gamesObj, aScore, bScore, aWins, bWins, m, payload });
+    } else {
+      window.showDslToast('❌ NTCPA 拒絕跳場申請，請依序輸入', 5000);
+      if (iconEl)  iconEl.textContent  = '🎉';
+      if (titleEl) titleEl.textContent = '登記成功！';
+      backToCourtList();
+    }
+  });
 }
 
 let _successTimer = null;
@@ -1955,6 +2036,7 @@ restoreSchedule();
           winner,
           _scored,
           _locked:  !!m.locked,
+          num:      m.num || 0,
           _ntcpaId: m.id    // 保留 NTCPA match ID，供寫回 Firebase 使用
         };
       });
