@@ -480,6 +480,67 @@
     .qs-team-btn{padding:14px 8px 12px;}
     .qs-tname{font-size:13px;}
   }
+
+  /* ════ PHONE SIMULATOR ════ */
+  #phone-toggle-btn{
+    position:fixed;bottom:20px;right:20px;z-index:9999;
+    padding:8px 16px;border-radius:99px;
+    border:2px solid var(--blue);background:#fff;
+    color:var(--blue);font-size:13px;font-weight:700;
+    cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.15);
+    transition:all .2s;user-select:none;
+  }
+  #phone-toggle-btn.active{background:var(--blue);color:#fff;}
+
+  /* Phone frame mode */
+  body.phone-mode{
+    background:#1c1c2e;
+    align-items:center;
+    padding:24px 0 60px;
+  }
+  body.phone-mode .top-header,
+  body.phone-mode .page{
+    max-width:390px !important;
+  }
+  /* Phone shell */
+  body.phone-mode .top-header{
+    border-radius:40px 40px 0 0;
+    overflow:hidden;
+  }
+  body.phone-mode #page-view{
+    border-radius:0 0 40px 40px;
+    overflow:hidden;
+  }
+  body.phone-mode #page-record:last-of-type,
+  body.phone-mode #page-view.active:last-child{
+    border-radius:0 0 40px 40px;
+  }
+  /* Phone frame ring */
+  body.phone-mode::before{
+    content:'';
+    position:fixed;
+    top:0;left:50%;
+    transform:translateX(-50%);
+    width:414px;height:100vh;
+    border-left:12px solid #111;
+    border-right:12px solid #111;
+    pointer-events:none;
+    z-index:500;
+    border-radius:44px;
+    box-shadow:inset 0 0 0 2px #333,0 0 60px rgba(0,0,0,.5);
+  }
+  /* Notch */
+  body.phone-mode::after{
+    content:'';
+    position:fixed;
+    top:8px;left:50%;
+    transform:translateX(-50%);
+    width:120px;height:28px;
+    background:#111;
+    border-radius:0 0 18px 18px;
+    z-index:600;
+    pointer-events:none;
+  }
 </style>
 </head>
 <body>
@@ -859,6 +920,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<button id="phone-toggle-btn" onclick="togglePhone()" title="切換手機/電腦顯示模式">📱 手機模式</button>
 
 <script>
 /* ═══════════════════════════════════════════
@@ -1033,44 +1095,41 @@ function qsBuildLoserGrid(){
 }
 
 function qsPickLose(loseScore){
-  // record game
+  // 單局制：選完直接進確認
   qs.games.push({side:qs.selectedSide, win:qs.winScore, lose:loseScore});
   qsUpdateLog();
-
   const aWins = qs.games.filter(g=>g.side==='a').length;
   const bWins = qs.games.filter(g=>g.side==='b').length;
-
-  if(aWins>=2 || bWins>=2){
-    // match over
-    qsBuildConfirm(aWins, bWins);
-    qsShowPhase('confirm');
-  } else {
-    // need more games
-    if(qs.games.length===2) showToast('1:1 平手！進入決勝局');
-    const gameNum = qs.games.length + 1;
-    document.getElementById('qs-pick-title').textContent = `第 ${gameNum} 局 — 請點選勝隊`;
-    qsShowPhase('winner');
-  }
+  qsBuildConfirm(aWins, bWins);
+  qsShowPhase('confirm');
 }
 
 function qsBuildConfirm(aWins, bWins){
   const m = qs.m;
-  let rows = '';
-  qs.games.forEach((g,i)=>{
-    const sa = g.side==='a'?g.win:g.lose;
-    const sb = g.side==='b'?g.win:g.lose;
-    const wName = g.side==='a'?m.teamA:m.teamB;
-    rows+=`<div class="qs-game-row">
-      <span class="qs-game-num">第 ${i+1} 局</span>
-      <span class="qs-game-score"><span class="score-a">${sa}</span> : <span class="score-b">${sb}</span></span>
-      <span class="qs-game-winner">${wName}</span>
+  const g = qs.games[0];
+  const sa = g.side==='a' ? g.win : g.lose;
+  const sb = g.side==='b' ? g.win : g.lose;
+  // 單局：只顯示該局比分
+  document.getElementById('qs-confirm-games').innerHTML = `
+    <div class="qs-game-row">
+      <span class="qs-game-num">比分</span>
+      <span class="qs-game-score">
+        <span class="score-a">${sa}</span> : <span class="score-b">${sb}</span>
+      </span>
     </div>`;
-  });
-  document.getElementById('qs-confirm-games').innerHTML = rows;
+  // Big score = actual game score
   document.getElementById('qs-series').innerHTML =
-    `<span class="score-a">${aWins}</span> : <span class="score-b">${bWins}</span>`;
+    `<span class="score-a">${sa}</span> : <span class="score-b">${sb}</span>`;
   document.getElementById('qs-confirm-winner').textContent =
-    aWins>bWins ? m.teamA : m.teamB;
+    g.side==='a' ? m.teamA : m.teamB;
+}
+
+/* ── Phone simulator toggle ── */
+function togglePhone(){
+  const on = document.body.classList.toggle('phone-mode');
+  const btn = document.getElementById('phone-toggle-btn');
+  btn.textContent = on ? '💻 電腦模式' : '📱 手機模式';
+  btn.classList.toggle('active', on);
 }
 
 function qsReset(){
