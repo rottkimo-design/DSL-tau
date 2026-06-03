@@ -1019,15 +1019,22 @@ function showCourtList(n, matches) {
 }
 
 const _CN=['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
-function _teamLines(team, isWinner, dot) {
+function _teamLines(team, isWinner, dot, pos) {
   const parts = team.split(' / ');
   const trophy = isWinner ? '🏆 ' : '';
   const cls = isWinner ? 'winner' : '';
   if (parts.length === 2) {
-    return `<div class="mi-team-name ${cls}">${trophy}${dot} ${parts[0]}</div>`
-         + `<div class="mi-team-name">${parts[1]}</div>`;
+    const p1 = pos ? `${pos}1 ` : '';
+    const p2 = pos ? `${pos}2 ` : '';
+    return `<div style="display:flex;align-items:center;justify-content:center;gap:6px">` +
+      `<div style="font-size:18px;line-height:1;flex-shrink:0">${dot}</div>` +
+      `<div style="text-align:left;min-width:0">` +
+        `<div class="mi-team-name ${cls}" style="white-space:nowrap">${trophy}${p1}${parts[0]}</div>` +
+        `<div class="mi-team-name" style="white-space:nowrap">${p2}${parts[1]}</div>` +
+      `</div>` +
+    `</div>`;
   }
-  return `<div class="mi-team-name ${cls}">${trophy}${dot} ${team}</div>`;
+  return `<div class="mi-team-name ${cls}" style="white-space:nowrap">${trophy}${dot} ${team}</div>`;
 }
 
 function renderMatchItem(m, i) {
@@ -1066,9 +1073,9 @@ function renderMatchItem(m, i) {
           : `<span class="mi-status-pending">⏳ 待輸入</span>`}
     </div>
     <div class="mi-matchup">
-      <div class="mi-team">${_teamLines(m.teamA, winnerA, '🟠')}</div>
+      <div class="mi-team">${_teamLines(m.teamA, winnerA, '🟠', 'A')}</div>
       ${scoreHtml}
-      <div class="mi-team">${_teamLines(m.teamB, winnerB, '🔵')}</div>
+      <div class="mi-team">${_teamLines(m.teamB, winnerB, '🔵', 'B')}</div>
     </div>
   </div>`;
 }
