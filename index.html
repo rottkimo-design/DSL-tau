@@ -891,11 +891,7 @@
       <div class="success-icon">🎉</div>
       <div class="success-title">登記成功！</div>
       <div class="success-sub" id="success-detail"></div>
-      <button class="btn btn-blue" onclick="downloadCSV()">
-        ⬇️ 下載 DUPR CSV <span class="csv-count" id="csv-count">0</span>
-      </button>
-      <button class="btn btn-secondary" onclick="copyResult()" style="margin-top:7px">📋 複製結果</button>
-      <button class="btn btn-primary" onclick="goNextMatch()" style="margin-top:7px" id="btn-next-match">下一場 →</button>
+      <button class="btn btn-primary" onclick="goNextMatch()" style="margin-top:7px" id="btn-next-match">跳至下一場</button>
       <button class="btn btn-secondary" onclick="backToCourtList()" style="margin-top:7px">← 回場地列表</button>
       <div style="color:var(--muted);font-size:11px;text-align:center;margin-top:14px;line-height:1.6">
         可至 <strong>DUPR → Club → Upload CSV</strong> 匯入
@@ -1211,7 +1207,7 @@ function qsConfirm(){
   const courtMatches=scheduleMatches.filter(x=>x.court===st.court);
   const remaining=courtMatches.filter(x=>!x._scored).length;
   const nextBtn=document.getElementById('btn-next-match');
-  nextBtn.textContent=remaining>0?`下一場 →（還有 ${remaining} 場）`:'🎉 全部完成！回場地列表';
+  nextBtn.textContent=remaining>0?`跳至下一場（還有 ${remaining} 場）`:'🎉 全部完成！回場地列表';
   showSec('success');
 }
 
@@ -1478,7 +1474,7 @@ function submitScore(){
   const remaining=courtMatches.filter(m=>!m._scored).length;
   const nextBtn=document.getElementById('btn-next-match');
   if(remaining>0){
-    nextBtn.textContent=`下一場 →（還有 ${remaining} 場）`;
+    nextBtn.textContent=`跳至下一場（還有 ${remaining} 場）`;
     nextBtn.style.display='';
   }else{
     nextBtn.textContent='🎉 全部完成！回場地列表';
