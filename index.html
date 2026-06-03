@@ -143,18 +143,11 @@
     display:flex;align-items:center;gap:8px;
   }
   .mi-team{
-    flex:1;min-width:0;
+    flex:1;min-width:0;text-align:center;
   }
   .mi-team-name{
     font-size:17px;font-weight:700;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  }
-  /* 單欄模式（手機模擬器 或 窄 viewport）→ 允許換行 */
-  body.phone-mode .mi-team-name{
     white-space:normal;word-break:break-word;
-  }
-  @media(max-width:600px){
-    .mi-team-name{ white-space:normal;word-break:break-word; }
   }
   .mi-team-name.winner{color:var(--green-dark);}
   .mi-team-id{font-size:14px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -1015,19 +1008,23 @@ function showCourtList(n, matches) {
   showSec('court-list');
 }
 
+const _CN=['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
+function _teamLines(team, isWinner, dot) {
+  const parts = team.split(' / ');
+  const trophy = isWinner ? '🏆 ' : '';
+  const cls = isWinner ? 'winner' : '';
+  if (parts.length === 2) {
+    return `<div class="mi-team-name ${cls}">${trophy}${dot} ${parts[0]}</div>`
+         + `<div class="mi-team-name">${parts[1]}</div>`;
+  }
+  return `<div class="mi-team-name ${cls}">${trophy}${dot} ${team}</div>`;
+}
+
 function renderMatchItem(m, i) {
   const scored = !!m._scored;
-  const typeTag = m.type==='doubles'
-    ? '<span class="mi-tag doubles">雙打</span>'
-    : '<span class="mi-tag singles">單打</span>';
-
-  // ID display
-  const idA = m.type==='doubles'
-    ? [m.playerA1DuprId,m.playerA2DuprId].filter(Boolean).join(' / ')
-    : m.playerA1DuprId||'';
-  const idB = m.type==='doubles'
-    ? [m.playerB1DuprId,m.playerB2DuprId].filter(Boolean).join(' / ')
-    : m.playerB1DuprId||'';
+  const typeLabel = m.type==='doubles' ? '雙打' : '單打';
+  const typeCls   = m.type==='doubles' ? 'doubles' : 'singles';
+  const matchNo   = `第${_CN[i]||String(i+1)}場`;
 
   let scoreHtml = '';
   if (scored) {
@@ -1047,21 +1044,18 @@ function renderMatchItem(m, i) {
   return `
   <div class="match-item ${scored?'scored':''}" data-court="${m.court}" ${onclick}>
     <div class="mi-top">
-      <div class="mi-tags">${typeTag}</div>
+      <div class="mi-tags">
+        <span class="mi-tag ${typeCls}">${typeLabel}</span>
+        <span class="mi-tag">${matchNo}</span>
+      </div>
       ${scored
         ? `<span class="mi-status-done">✅ 已完成</span>`
         : `<span class="mi-status-pending">⏳ 待輸入</span>`}
     </div>
     <div class="mi-matchup">
-      <div class="mi-team">
-        <div class="mi-team-name ${winnerA?'winner':''}">${winnerA?'🏆 ':''}🟠 ${m.teamA}</div>
-        ${idA?`<div class="mi-team-id">${idA}</div>`:''}
-      </div>
+      <div class="mi-team">${_teamLines(m.teamA, winnerA, '🟠')}</div>
       ${scoreHtml}
-      <div class="mi-team" style="text-align:right">
-        <div class="mi-team-name ${winnerB?'winner':''}">${winnerB?'🏆 ':''}🔵 ${m.teamB}</div>
-        ${idB?`<div class="mi-team-id">${idB}</div>`:''}
-      </div>
+      <div class="mi-team">${_teamLines(m.teamB, winnerB, '🔵')}</div>
     </div>
   </div>`;
 }
