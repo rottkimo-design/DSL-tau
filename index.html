@@ -560,6 +560,7 @@
       <div class="home-title">選擇場地</div>
       <div style="display:flex;gap:6px">
         <button class="import-btn" id="reassign-btn" onclick="openCourtModal()" style="display:none;border-color:var(--orange);color:var(--orange)">⚙ 重新分配</button>
+        <button class="import-btn" id="clear-btn" onclick="clearSchedule()" style="display:none;border-color:var(--red);color:var(--red)">🗑 清除</button>
         <button class="import-btn" onclick="document.getElementById('schedule-file-input').click()">
           ⬆ 載入賽程
         </button>
@@ -1167,6 +1168,7 @@ function qsConfirm(){
     const sm=scheduleMatches[qs.matchIdx];
     sm._scored=true; sm.games=gamesObj;
     sm.numGames=qs.games.length; sm.winner=payload.winner;
+    saveSchedule(); // 比分寫回賽程，立刻持久化
   }
 
   const history=JSON.parse(localStorage.getItem('mcvs_matches')||'[]');
@@ -1508,6 +1510,7 @@ function loadSchedule(e){
         openCourtModal();
       }else{
         updateHomeBadges();
+        saveSchedule();
         showToast(`✅ 載入 ${scheduleMatches.length} 場賽程`);
       }
     }catch(err){showToast('CSV 格式有誤');console.error(err);}
@@ -1572,13 +1575,24 @@ function confirmCourtAssign(){
   viewMatches=scheduleMatches;
   showSec('home');
   updateHomeBadges();
+  saveSchedule();
   showToast(`✅ 已分配到 ${numCourts} 個場地`);
+}
+
+function clearSchedule(){
+  if(!confirm('確定要清除所有賽程資料？'))return;
+  scheduleMatches=[];viewMatches=[];
+  localStorage.removeItem('mcvs_schedule');
+  updateHomeBadges();
+  showSec('home');
+  showToast('賽程已清除');
 }
 
 function updateHomeBadges(){
   const hint=document.getElementById('no-schedule-hint');
-  // Show reassign button if schedule loaded
-  document.getElementById('reassign-btn').style.display=scheduleMatches.length?'':'none';
+  const hasData=scheduleMatches.length>0;
+  document.getElementById('reassign-btn').style.display=hasData?'':'none';
+  document.getElementById('clear-btn').style.display=hasData?'':'none';
   let hasAny=false;
   [1,2,3,4].forEach(n=>{
     const matches=scheduleMatches.filter(m=>m.court===n);
@@ -1795,6 +1809,31 @@ function showToast(msg){
 document.getElementById('tab-view').addEventListener('click',()=>{
   if(!viewMatches.length)autoLoadView();
 });
+
+/* ═══════════════════════════════════════
+   SCHEDULE PERSISTENCE（重整後保留）
+═══════════════════════════════════════ */
+function saveSchedule(){
+  try{
+    localStorage.setItem('mcvs_schedule', JSON.stringify(scheduleMatches));
+  }catch(e){}
+}
+
+function restoreSchedule(){
+  try{
+    const raw = localStorage.getItem('mcvs_schedule');
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    if(!Array.isArray(data) || !data.length) return;
+    scheduleMatches = data;
+    viewMatches = scheduleMatches;
+    updateHomeBadges();
+    showToast(`✅ 已還原 ${data.length} 場賽程`);
+  }catch(e){}
+}
+
+// 頁面載入時自動還原
+restoreSchedule();
 </script>
 </body>
 </html>
