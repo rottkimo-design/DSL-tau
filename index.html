@@ -1387,8 +1387,8 @@ function doSubmitScore({ sm, gamesObj, aScore, bScore, aWins, bWins, m, payload 
     const fbIdx = window._ntcpaMatchIdx[sm._ntcpaId];
     if(fbIdx !== undefined){
       window._fbDb
-        .ref(`ntcpa/venues/${window._ntcpaVenueId}/data/matches/${fbIdx}`)
-        .update({ aScore, bScore })
+        .ref(`ntcpa/venues/${window._ntcpaVenueId}/data`)
+        .update({ [`matches/${fbIdx}/aScore`]: aScore, [`matches/${fbIdx}/bScore`]: bScore, _sid: 'DSL_' + Date.now() })
         .catch(err => console.warn('Firebase write-back failed:', err));
 
       const winnerTeam = aWins > bWins ? m.teamA : m.teamB;
@@ -1612,8 +1612,8 @@ function submitScore(){
         const aScore = st.g[1] ? (st.g[1].a || 0) : 0;
         const bScore = st.g[1] ? (st.g[1].b || 0) : 0;
         window._fbDb
-          .ref(`ntcpa/venues/${window._ntcpaVenueId}/data/matches/${fbIdx}`)
-          .update({ aScore, bScore })
+          .ref(`ntcpa/venues/${window._ntcpaVenueId}/data`)
+          .update({ [`matches/${fbIdx}/aScore`]: aScore, [`matches/${fbIdx}/bScore`]: bScore, _sid: 'DSL_' + Date.now() })
           .catch(err => console.warn('Firebase write-back failed:', err));
         // ── 廣播通知到 NTCPA ──
         const winnerTeam = wA > wB ? teamA : teamB;
