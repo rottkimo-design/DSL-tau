@@ -1202,7 +1202,6 @@ function qsConfirm(){
   st._last=payload;
 
   document.getElementById('success-detail').textContent=`場地 ${st.court}　${m.teamA} vs ${m.teamB}`;
-  document.getElementById('csv-count').textContent=history.length;
 
   const courtMatches=scheduleMatches.filter(x=>x.court===st.court);
   const remaining=courtMatches.filter(x=>!x._scored).length;
@@ -1466,7 +1465,6 @@ function submitScore(){
   st._last=payload;
 
   document.getElementById('success-detail').textContent=`場地 ${st.court}　${teamA} vs ${teamB}`;
-  document.getElementById('csv-count').textContent=history.length;
   btn.disabled=false;btn.textContent='✅ 儲存並登記';
 
   // Update "next match" button label
