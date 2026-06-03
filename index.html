@@ -109,15 +109,8 @@
 
   #cl-match-list{
     display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-  }
-  /* 窄 viewport 或手機模擬器 → 單欄 */
-  @media(max-width:600px){
-    #cl-match-list{ grid-template-columns:1fr; }
-  }
-  body.phone-mode #cl-match-list{
     grid-template-columns:1fr;
+    gap:10px;
   }
   .match-item{
     background:#fff;border-radius:14px;
