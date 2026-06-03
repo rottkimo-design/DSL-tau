@@ -560,9 +560,28 @@
   body.phone-mode .page{
     max-width:390px;
   }
+/* ── Score notification toast ── */
+#dsl-notify {
+  display: none;
+  position: fixed; top: 72px; left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: #1a252f; color: #fff;
+  padding: 14px 22px; border-radius: 18px;
+  box-shadow: 0 8px 36px rgba(0,0,0,0.35);
+  z-index: 9999; min-width: 280px; max-width: calc(100vw - 32px);
+  font-size: 15px; line-height: 1.65; text-align: center;
+  white-space: pre-line;
+  opacity: 0; transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+}
+#dsl-notify.show {
+  display: block; opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
 </style>
 </head>
 <body>
+<div id="dsl-notify"></div>
 
 <div id="app-root">
 <div id="phone-notch" style="display:none"></div>
@@ -1218,6 +1237,14 @@ function qsConfirm(){
           .ref(`ntcpa/venues/${window._ntcpaVenueId}/data/matches/${fbIdx}`)
           .update({ aScore, bScore })
           .catch(err => console.warn('Firebase write-back failed:', err));
+
+        // ── 廣播通知到 NTCPA ──
+        const winnerTeam = aWins > bWins ? m.teamA : m.teamB;
+        const notifyMsg = `🏆 Court ${st.court} · 第 ${(qs.matchIdx||0)+1} 場\n${m.teamA} ${aScore} : ${bScore} ${m.teamB}\n🥇 勝隊：${winnerTeam}`;
+        if (window._notifyRef) {
+          window._notifyRef.push({ msg: notifyMsg, ts: Date.now(), did: DSL_DEVICE_ID }).catch(()=>{});
+        }
+        window.showDslToast(notifyMsg, 5000); // 也在 DSL 自己畫面顯示
       }
     }
   }
@@ -1494,6 +1521,13 @@ function submitScore(){
           .ref(`ntcpa/venues/${window._ntcpaVenueId}/data/matches/${fbIdx}`)
           .update({ aScore, bScore })
           .catch(err => console.warn('Firebase write-back failed:', err));
+        // ── 廣播通知到 NTCPA ──
+        const winnerTeam = wA > wB ? teamA : teamB;
+        const notifyMsg = `🏆 Court ${st.court} · 第 ${(st.prefillIdx||0)+1} 場\n${teamA} ${aScore} : ${bScore} ${teamB}\n🥇 勝隊：${winnerTeam}`;
+        if (window._notifyRef) {
+          window._notifyRef.push({ msg: notifyMsg, ts: Date.now(), did: DSL_DEVICE_ID }).catch(()=>{});
+        }
+        window.showDslToast(notifyMsg, 5000);
       }
     }
   }
@@ -1906,6 +1940,27 @@ restoreSchedule();
   // ── 全域：讓 submitScore() 可寫回 Firebase ──
   window._fbDb            = null;   // Firebase db 實例
   window._ntcpaMatchIdx   = {};     // _ntcpaId → Firebase array index
+  window._notifyRef       = null;   // notify 路徑 ref
+
+  // ── DSL Toast（5 秒顯示）──────────────────────────────────
+  const DSL_DEVICE_ID = (function(){
+    let id = localStorage.getItem('dsl_device_id');
+    if (!id) { id = Math.random().toString(36).slice(2,12); localStorage.setItem('dsl_device_id', id); }
+    return id;
+  })();
+  let _dslNotifyTimer = null;
+  window.showDslToast = function(msg, duration) {
+    const el = document.getElementById('dsl-notify');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = 'block';
+    requestAnimationFrame(() => el.classList.add('show'));
+    clearTimeout(_dslNotifyTimer);
+    _dslNotifyTimer = setTimeout(() => {
+      el.classList.remove('show');
+      setTimeout(() => { el.style.display = 'none'; }, 260);
+    }, duration || 5000);
+  };
 
   // ── Firebase config（與 NTCPA DUPR Score 共用同一資料庫）──
   const firebaseConfig = {
@@ -2017,6 +2072,18 @@ restoreSchedule();
 
     // 暴露 db 供 submitScore() 寫回使用
     window._fbDb = db;
+
+    // ── 監聽 NTCPA 廣播通知（顯示 5 秒 toast）──
+    window._notifyRef = db.ref(`ntcpa/venues/${VENUE_ID}/notify`);
+    let _notifyReady = false;
+    window._notifyRef.limitToLast(1).on('value', snap => {
+      if (!_notifyReady) { _notifyReady = true; return; }
+      snap.forEach(child => {
+        const d = child.val();
+        if (!d || d.did === DSL_DEVICE_ID) return;
+        window.showDslToast(d.msg, 5000);
+      });
+    });
 
     // 即時監聽比賽資料
     db.ref(`ntcpa/venues/${VENUE_ID}/data`).on('value',
