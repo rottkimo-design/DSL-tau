@@ -1470,6 +1470,19 @@ function submitScore(){
     sm.games=JSON.parse(JSON.stringify(st.g));
     sm.numGames=st.numGames;
     sm.winner=payload.winner;
+
+    // ── 寫回 Firebase（同步分數到 NTCPA DUPR Score）──
+    if(sm._ntcpaId != null && window._fbDb && window._ntcpaMatchIdx){
+      const fbIdx = window._ntcpaMatchIdx[sm._ntcpaId];
+      if(fbIdx !== undefined){
+        const aScore = st.g[1] ? (st.g[1].a || 0) : 0;
+        const bScore = st.g[1] ? (st.g[1].b || 0) : 0;
+        window._fbDb
+          .ref(`ntcpa/venues/${window._ntcpaVenueId}/data/matches/${fbIdx}`)
+          .update({ aScore, bScore })
+          .catch(err => console.warn('Firebase write-back failed:', err));
+      }
+    }
   }
 
   const history=JSON.parse(localStorage.getItem('mcvs_matches')||'[]');
@@ -1877,6 +1890,10 @@ restoreSchedule();
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script>
 (function initFirebaseSync() {
+  // ── 全域：讓 submitScore() 可寫回 Firebase ──
+  window._fbDb            = null;   // Firebase db 實例
+  window._ntcpaMatchIdx   = {};     // _ntcpaId → Firebase array index
+
   // ── Firebase config（與 NTCPA DUPR Score 共用同一資料庫）──
   const firebaseConfig = {
     apiKey:            "[REMOVED]",
@@ -1890,6 +1907,7 @@ restoreSchedule();
 
   // 監聽的場地 ID（對應 NTCPA 管理後台）
   const VENUE_ID = 'MCVS_Court';
+  window._ntcpaVenueId = VENUE_ID;   // 暴露供 submitScore 使用
 
   let ntcpaVenueName = 'MCVS';
 
@@ -1965,7 +1983,8 @@ restoreSchedule();
           games:    { 1: { a: aScore, b: bScore } },
           numGames: 1,
           winner,
-          _scored
+          _scored,
+          _ntcpaId: m.id    // 保留 NTCPA match ID，供寫回 Firebase 使用
         };
       });
   }
@@ -1983,11 +2002,20 @@ restoreSchedule();
       if (cfg && cfg.name) ntcpaVenueName = cfg.name;
     });
 
+    // 暴露 db 供 submitScore() 寫回使用
+    window._fbDb = db;
+
     // 即時監聽比賽資料
     db.ref(`ntcpa/venues/${VENUE_ID}/data`).on('value',
       snap => {
         const data = snap.val();
         if (!data) { badgeOffline(); return; }
+
+        // 建立 ntcpaId → firebase array index 索引表
+        const rawMatches = toArr(data.matches);
+        window._ntcpaMatchIdx = {};
+        rawMatches.forEach((m, i) => { if (m && m.id != null) window._ntcpaMatchIdx[m.id] = i; });
+
         const converted = ntcpaToScheduleMatches(data);
         scheduleMatches = converted;
         viewMatches     = converted;
