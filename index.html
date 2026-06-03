@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MCVS 分數登記</title>
+<style>
+  :root {
+    --green:#2ecc71; --green-dark:#27ae60;
+    --blue:#3498db;  --orange:#e67e22;
+    --red:#e74c3c;   --gray:#f0f0f0;
+    --text:#2c3e50;  --muted:#7f8c8d;
+    --radius:16px;   --shadow:0 4px 20px rgba(0,0,0,.1);
+    --c1:#e74c3c; --c2:#3498db; --c3:#2ecc71; --c4:#e67e22;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:#f5f7fa;color:var(--text);
+    min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;padding-bottom:60px;
+  }
+
+  /* ── Top bar ── */
+  .top-header{
+    width:100%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08);
+    padding:14px 16px 0;display:flex;flex-direction:column;align-items:center;
+    position:sticky;top:0;z-index:20;
+  }
+  .top-header h1{font-size:21px;font-weight:800;letter-spacing:1px;}
+  .top-header p{color:var(--muted);font-size:12px;margin-top:2px;margin-bottom:10px;}
+  .tab-bar{display:flex;width:100%;max-width:900px;border-bottom:2px solid #eee;}
+  .tab-btn{
+    flex:1;padding:10px;text-align:center;font-size:15px;font-weight:600;
+    color:var(--muted);background:none;border:none;cursor:pointer;
+    border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;
+  }
+  .tab-btn.active{color:var(--green-dark);border-bottom-color:var(--green);}
+
+  /* ── Pages ── */
+  .page{display:none;width:100%;max-width:900px;padding:20px 16px;}
+  .page.active{display:block;}
+
+  /* ── Section system (within record page) ── */
+  .sec{display:none;}
+  .sec.active{display:block;}
+
+  /* ════════ HOME — Court tiles ════════ */
+  .home-top{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:16px;
+  }
+  .home-title{font-size:18px;font-weight:700;}
+  .import-btn{
+    padding:7px 14px;border-radius:99px;border:2px solid var(--blue);
+    background:#fff;color:var(--blue);font-size:13px;font-weight:700;
+    cursor:pointer;transition:all .2s;
+  }
+  .import-btn:active{background:#eaf4fb;}
+
+  .court-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .court-tile{
+    border-radius:var(--radius);background:#fff;box-shadow:var(--shadow);
+    padding:20px 12px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:4px;
+    cursor:pointer;transition:all .2s;position:relative;
+    border-top:5px solid #e0e0e0;min-height:130px;
+  }
+  .court-tile[data-court="1"]{border-top-color:var(--c1);}
+  .court-tile[data-court="2"]{border-top-color:var(--c2);}
+  .court-tile[data-court="3"]{border-top-color:var(--c3);}
+  .court-tile[data-court="4"]{border-top-color:var(--c4);}
+  .court-tile:active{transform:scale(.97);}
+  .ct-num{font-size:40px;font-weight:900;color:var(--text);line-height:1;}
+  .ct-name{font-size:12px;font-weight:600;color:var(--muted);}
+  .ct-badge{
+    position:absolute;top:8px;right:8px;
+    background:var(--green);color:#fff;
+    font-size:11px;font-weight:800;border-radius:99px;
+    padding:2px 7px;
+  }
+  .ct-badge.done{background:var(--muted);}
+  .ct-no-data{font-size:11px;color:#ccc;margin-top:2px;}
+
+  .no-schedule-hint{
+    background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:24px;text-align:center;margin-top:8px;
+  }
+  .no-schedule-hint .icon{font-size:36px;margin-bottom:8px;}
+  .no-schedule-hint p{color:var(--muted);font-size:13px;line-height:1.6;}
+
+  /* ════════ COURT LIST ════════ */
+  .cl-header{
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:16px;
+  }
+  .back-btn{
+    width:36px;height:36px;border-radius:50%;
+    border:2px solid #e0e0e0;background:#fff;
+    font-size:18px;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .cl-title{font-size:20px;font-weight:800;}
+  .cl-sub{font-size:13px;color:var(--muted);flex:1;text-align:right;}
+
+  #cl-match-list{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  @media(max-width:600px){
+    #cl-match-list{ grid-template-columns:1fr; }
+  }
+  .match-item{
+    background:#fff;border-radius:14px;
+    box-shadow:0 2px 10px rgba(0,0,0,.07);
+    padding:14px 16px;
+    cursor:pointer;transition:all .2s;
+    border-left:4px solid #e0e0e0;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .match-item[data-court="1"]{border-left-color:var(--c1);}
+  .match-item[data-court="2"]{border-left-color:var(--c2);}
+  .match-item[data-court="3"]{border-left-color:var(--c3);}
+  .match-item[data-court="4"]{border-left-color:var(--c4);}
+  .match-item:active{transform:scale(.98);background:#f8fffe;}
+  .match-item.scored{opacity:.6;cursor:default;}
+  .match-item.scored:active{transform:none;}
+
+  .mi-top{display:flex;justify-content:space-between;align-items:center;}
+  .mi-tags{display:flex;gap:5px;}
+  .mi-tag{
+    font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;
+    background:var(--gray);color:var(--muted);
+  }
+  .mi-tag.doubles{background:#d6eaf8;color:var(--blue);}
+  .mi-tag.singles{background:#fef9e7;color:#b7950b;}
+  .mi-status-pending{font-size:11px;font-weight:700;color:var(--orange);}
+  .mi-status-done{font-size:11px;font-weight:700;color:var(--green-dark);}
+
+  .mi-matchup{
+    display:flex;align-items:center;gap:8px;
+  }
+  .mi-team{
+    flex:1;min-width:0;
+  }
+  .mi-team-name{
+    font-size:14px;font-weight:700;
+    white-space:normal;word-break:break-word;
+  }
+  .mi-team-name.winner{color:var(--green-dark);}
+  .mi-team-id{font-size:11px;color:var(--muted);word-break:break-all;}
+  .mi-vs{flex-shrink:0;font-size:12px;font-weight:700;color:#ccc;}
+  .mi-score{flex-shrink:0;text-align:center;min-width:72px;}
+  .mi-score-pills{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;}
+  .mi-pill{
+    font-size:12px;font-weight:700;padding:2px 6px;border-radius:6px;background:#f0f0f0;
+  }
+  .mi-pill.wa{background:#fef9e7;color:#b7950b;}
+  .mi-pill.wb{background:#d6eaf8;color:var(--blue);}
+
+  .cl-add-manual{
+    width:100%;padding:14px;border:2px dashed #c8d6e5;border-radius:var(--radius);
+    background:#fff;font-size:15px;font-weight:700;color:var(--blue);
+    cursor:pointer;text-align:center;margin-top:6px;transition:all .2s;
+  }
+  .cl-add-manual:active{background:#eaf4fb;}
+
+  /* ════════ SCORE WIZARD ════════ */
+  .wizard-header{
+    display:flex;align-items:center;gap:10px;margin-bottom:16px;
+  }
+  .wizard-title{font-size:17px;font-weight:800;flex:1;}
+  .progress{display:flex;gap:6px;}
+  .progress-dot{width:24px;height:4px;border-radius:99px;background:#ddd;transition:background .3s;}
+  .progress-dot.active{background:var(--green);}
+  .progress-dot.done{background:var(--green-dark);}
+
+  .card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 18px;}
+  .step{display:none;}
+  .step.active{display:block;}
+  .step-title{font-size:19px;font-weight:700;margin-bottom:4px;}
+  .step-subtitle{color:var(--muted);font-size:13px;margin-bottom:16px;}
+
+  /* fields */
+  .type-toggle,.score-type-row{display:flex;gap:8px;margin-bottom:14px;}
+  .type-btn{
+    flex:1;padding:10px;border:2px solid #e0e0e0;border-radius:12px;
+    background:#fff;font-size:14px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s;
+  }
+  .type-btn.selected{border-color:var(--blue);background:#eaf4fb;color:var(--blue);}
+  .stype-btn{
+    flex:1;padding:8px;border:2px solid #e0e0e0;border-radius:10px;
+    background:#fff;font-size:12px;font-weight:600;cursor:pointer;
+    text-align:center;transition:all .2s;color:var(--muted);
+  }
+  .stype-btn.selected{border-color:var(--orange);background:#fef9f0;color:var(--orange);}
+  .field-row{margin-bottom:12px;}
+  .field-label{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;}
+  .field-input{
+    width:100%;border:2px solid #e0e0e0;border-radius:10px;
+    padding:10px 12px;font-size:15px;outline:none;transition:border-color .2s;
+  }
+  .field-input:focus{border-color:var(--green);}
+  .field-input.small{font-size:13px;padding:7px 11px;color:var(--muted);}
+  .team-block{background:#fafafa;border-radius:12px;padding:11px 13px;margin-bottom:10px;}
+  .team-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+  .team-label.a{color:var(--orange);}
+  .team-label.b{color:var(--blue);}
+  .player-row{display:flex;flex-direction:column;gap:4px;margin-bottom:7px;}
+  .player-row:last-child{margin-bottom:0;}
+
+  /* match display card (prefill mode) */
+  .match-display{
+    border-radius:14px;overflow:hidden;margin-bottom:14px;
+    border:2px solid #e8f8f0;background:#f0faf5;
+  }
+  .md-court-bar{
+    background:var(--green-dark);color:#fff;
+    font-size:12px;font-weight:700;padding:5px 14px;
+    display:flex;justify-content:space-between;
+  }
+  .md-body{padding:14px 16px;display:flex;align-items:center;gap:8px;}
+  .md-team{flex:1;min-width:0;}
+  .md-team-name{font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .md-team-name.a{color:var(--orange);}
+  .md-team-name.b{color:var(--blue);}
+  .md-team-ids{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .md-vs{flex-shrink:0;font-size:11px;font-weight:800;color:#bbb;text-align:center;padding:0 4px;}
+
+  /* score */
+  .game-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #f0f0f0;}
+  .game-row:last-child{border-bottom:none;}
+  .game-label{font-size:13px;font-weight:700;color:var(--muted);width:50px;flex-shrink:0;}
+  .game-scores{display:flex;align-items:center;gap:8px;flex:1;}
+  .score-side{display:flex;align-items:center;gap:6px;flex:1;justify-content:center;}
+  .score-adj{
+    width:36px;height:36px;border-radius:50%;border:2px solid #e0e0e0;
+    background:#fff;font-size:20px;font-weight:700;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .15s;user-select:none;flex-shrink:0;
+  }
+  .score-adj:active{transform:scale(.9);background:var(--gray);}
+  .score-num{font-size:34px;font-weight:900;min-width:44px;text-align:center;line-height:1;}
+  .score-sep{font-size:20px;font-weight:300;color:#ccc;}
+  .game-toggle{
+    text-align:center;padding:9px 0;color:var(--blue);
+    font-size:13px;font-weight:600;cursor:pointer;user-select:none;
+  }
+  .quick-scores{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0 0;}
+  .quick-btn{
+    padding:4px 11px;border:1px solid #ddd;border-radius:99px;
+    background:#fff;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .quick-btn:active{background:#eee;}
+
+  /* summary */
+  .summary{background:#f8f9fa;border-radius:12px;padding:13px;margin-bottom:12px;}
+  .summary-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;}
+  .summary-row+.summary-row{border-top:1px solid #eee;}
+  .summary-label{color:var(--muted);}
+  .summary-value{font-weight:600;text-align:right;max-width:60%;}
+  .summary-score{font-size:15px;font-weight:800;text-align:center;margin:8px 0 6px;letter-spacing:2px;}
+  .score-a{color:var(--orange);}
+  .score-b{color:var(--blue);}
+  .winner-banner{
+    background:#eafaf1;border:2px solid var(--green);border-radius:12px;
+    text-align:center;padding:11px;margin-bottom:11px;
+  }
+  .winner-label{font-size:11px;color:var(--muted);margin-bottom:3px;}
+  .winner-name{font-size:19px;font-weight:800;}
+
+  /* success */
+  .success-icon{font-size:60px;text-align:center;margin:8px 0;}
+  .success-title{font-size:21px;font-weight:800;text-align:center;margin-bottom:5px;}
+  .success-sub{color:var(--muted);text-align:center;font-size:13px;margin-bottom:18px;}
+  .csv-count{display:inline-block;background:var(--blue);color:#fff;border-radius:99px;font-size:11px;font-weight:700;padding:1px 7px;margin-left:5px;}
+
+  /* buttons */
+  .divider{height:1px;background:#f0f0f0;margin:14px 0;}
+  .btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:7px;}
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--green);color:#fff;}
+  .btn-primary:disabled{background:#ccc;cursor:not-allowed;}
+  .btn-secondary{background:var(--gray);color:var(--text);}
+  .btn-blue{background:var(--blue);color:#fff;}
+
+  /* ════════ VIEW PAGE ════════ */
+  .drop-zone{
+    border:2px dashed #c8d6e5;border-radius:var(--radius);
+    padding:32px 20px;text-align:center;cursor:pointer;
+    transition:all .2s;background:#fff;margin-bottom:14px;
+  }
+  .drop-zone.drag-over{border-color:var(--blue);background:#eaf4fb;}
+  .drop-zone-icon{font-size:36px;margin-bottom:6px;}
+  .drop-zone-text{font-size:14px;font-weight:600;}
+  .drop-zone-sub{font-size:12px;color:var(--muted);margin-top:3px;}
+  #csv-file-input{display:none;}
+  .import-stats{
+    background:#fff;border-radius:12px;padding:12px 16px;
+    box-shadow:var(--shadow);margin-bottom:14px;
+    display:flex;gap:12px;justify-content:space-around;
+  }
+  .stat-item{text-align:center;}
+  .stat-num{font-size:22px;font-weight:900;color:var(--green-dark);}
+  .stat-lbl{font-size:11px;color:var(--muted);margin-top:1px;}
+  .court-tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+  .court-tabs::-webkit-scrollbar{display:none;}
+  .ct-btn{
+    flex-shrink:0;padding:7px 13px;border-radius:99px;
+    border:2px solid #e0e0e0;background:#fff;
+    font-size:12px;font-weight:700;color:var(--muted);
+    cursor:pointer;transition:all .2s;
+  }
+  .ct-btn.active{border-color:var(--green);background:#eafaf1;color:var(--green-dark);}
+  .ct-btn .ct-count{font-size:11px;background:#e0e0e0;border-radius:99px;padding:1px 5px;margin-left:3px;}
+  .ct-btn.active .ct-count{background:var(--green);color:#fff;}
+  .match-list{display:flex;flex-direction:column;gap:10px;}
+  .match-card{
+    background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.07);
+    padding:13px 15px;border-left:4px solid #e0e0e0;
+  }
+  .match-card.court-1{border-left-color:var(--c1);}
+  .match-card.court-2{border-left-color:var(--c2);}
+  .match-card.court-3{border-left-color:var(--c3);}
+  .match-card.court-4{border-left-color:var(--c4);}
+  .mc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+  .mc-tags{display:flex;gap:4px;flex-wrap:wrap;}
+  .mc-tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--gray);color:var(--muted);}
+  .mc-tag.type-d{background:#d6eaf8;color:var(--blue);}
+  .mc-tag.type-s{background:#fef9e7;color:#b7950b;}
+  .mc-tag.court{background:#eafaf1;color:var(--green-dark);}
+  .mc-date{font-size:11px;color:var(--muted);}
+  .mc-matchup{display:flex;align-items:center;gap:8px;}
+  .mc-team{flex:1;min-width:0;}
+  .mc-team-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mc-team-id{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mc-score-block{flex-shrink:0;text-align:center;min-width:76px;}
+  .mc-scores{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;}
+  .mc-game{font-size:12px;font-weight:700;padding:2px 5px;border-radius:5px;background:#f8f9fa;}
+  .mc-game.win-a{background:#fef9e7;color:#b7950b;}
+  .mc-game.win-b{background:#d6eaf8;color:var(--blue);}
+  .mc-team.winner .mc-team-name{color:var(--green-dark);}
+  .no-matches{text-align:center;padding:36px 20px;color:var(--muted);font-size:14px;}
+
+  /* toast */
+  .toast{
+    position:fixed;bottom:24px;left:50%;
+    transform:translateX(-50%) translateY(80px);
+    background:#2c3e50;color:#fff;padding:11px 22px;
+    border-radius:99px;font-size:13px;font-weight:600;
+    transition:transform .3s ease;z-index:100;white-space:nowrap;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);}
+
+  /* ── Court assign section ── */
+  .modal-box{
+    background:#fff;border-radius:var(--radius);padding:24px 20px;
+    box-shadow:var(--shadow);
+  }
+  .modal-title{font-size:18px;font-weight:800;margin-bottom:6px;}
+  .modal-sub{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5;}
+  .court-count-row{display:flex;gap:8px;margin-bottom:16px;}
+  .cc-btn{
+    flex:1;padding:12px 6px;border:2px solid #e0e0e0;border-radius:12px;
+    background:#fff;font-size:20px;font-weight:800;cursor:pointer;
+    text-align:center;transition:all .2s;color:var(--muted);
+  }
+  .cc-btn.selected{border-color:var(--green);background:#eafaf1;color:var(--green-dark);}
+  .assign-preview{
+    background:#f8f9fa;border-radius:10px;padding:12px 14px;
+    margin-bottom:16px;font-size:13px;
+  }
+  .assign-row{
+    display:flex;justify-content:space-between;padding:4px 0;
+  }
+  .assign-row+.assign-row{border-top:1px solid #eee;}
+  .assign-court{font-weight:700;}
+  .assign-count{color:var(--muted);}
+  .assign-range{color:var(--blue);font-size:12px;}
+
+  /* ════════ QUICK SCORE SECTION ════════ */
+  .qs-header{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:18px;
+  }
+  .qs-badge{
+    background:var(--green-dark);color:#fff;font-size:12px;font-weight:800;
+    padding:3px 12px;border-radius:99px;
+  }
+  .qs-progress{font-size:12px;color:var(--muted);}
+  .qs-close{
+    width:32px;height:32px;border-radius:50%;border:2px solid #e0e0e0;
+    background:#fff;font-size:18px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+
+  /* Game mini-log (shows previous games) */
+  .qs-gamelog{
+    display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;min-height:24px;
+  }
+  .qs-gamelog-pill{
+    font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;
+    background:#f0f0f0;color:var(--text);
+  }
+  .qs-gamelog-pill.wa{background:#fef9e7;color:#b7950b;}
+  .qs-gamelog-pill.wb{background:#d6eaf8;color:var(--blue);}
+
+  /* Winner picker */
+  .qs-pick-title{
+    font-size:22px;font-weight:800;text-align:center;margin-bottom:20px;
+    color:var(--text);
+  }
+  .qs-teams{display:flex;gap:12px;}
+  .qs-team-btn{
+    flex:1;padding:20px 12px 16px;border:3px solid #e0e0e0;
+    border-radius:18px;background:#fff;cursor:pointer;
+    transition:all .2s;text-align:center;
+  }
+  .qs-team-btn:active{transform:scale(.96);}
+  .qs-team-btn.side-a{border-color:var(--orange);background:#fef9f0;}
+  .qs-team-btn.side-b{border-color:var(--blue);background:#eaf4fb;}
+  .qs-tside{font-size:11px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.5px;margin-bottom:8px;color:var(--muted);}
+  .qs-tname{font-size:15px;font-weight:800;line-height:1.45;word-break:break-word;}
+  .qs-tid{font-size:11px;color:var(--muted);margin-top:4px;}
+
+  /* Score entry */
+  .qs-score-title{
+    font-size:16px;font-weight:800;text-align:center;margin-bottom:4px;
+  }
+  .qs-score-sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:14px;}
+
+  .qs-win-row{
+    display:flex;align-items:center;justify-content:center;
+    gap:10px;margin-bottom:18px;
+  }
+  .qs-win-label{font-size:13px;font-weight:700;color:var(--muted);}
+  .qs-win-adj{
+    width:36px;height:36px;border-radius:50%;border:2px solid #e0e0e0;
+    background:#fff;font-size:20px;font-weight:700;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    user-select:none;
+  }
+  .qs-win-num{
+    font-size:36px;font-weight:900;min-width:52px;text-align:center;
+    color:var(--green-dark);
+  }
+
+  .qs-lose-label{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;}
+  .qs-loser-grid{
+    display:grid;gap:8px;
+    grid-template-columns:repeat(6,1fr);
+  }
+  .qs-loser-btn{
+    padding:12px 4px;border:2px solid #e0e0e0;border-radius:10px;
+    background:#fff;font-size:17px;font-weight:700;cursor:pointer;
+    text-align:center;transition:all .15s;user-select:none;
+  }
+  .qs-loser-btn:active{transform:scale(.92);background:#fdf2f2;border-color:var(--red);}
+
+  /* Confirm */
+  .qs-game-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:9px 0;font-size:14px;
+  }
+  .qs-game-row+.qs-game-row{border-top:1px solid #eee;}
+  .qs-game-num{color:var(--muted);font-weight:600;}
+  .qs-game-score{font-weight:800;font-size:16px;}
+  .qs-game-winner{font-size:12px;color:var(--muted);}
+  .qs-series{
+    font-size:52px;font-weight:900;text-align:center;
+    letter-spacing:6px;margin:14px 0 10px;
+  }
+
+  @media(max-width:360px){
+    .score-num{font-size:28px;}
+    .score-adj{width:32px;height:32px;}
+    .qs-team-btn{padding:14px 8px 12px;}
+    .qs-tname{font-size:13px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="top-header">
+  <h1>🏓 MCVS 分數登記</h1>
+  <p>選手快速登記系統</p>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-record" onclick="switchTab('record')">📝 登記</button>
+    <button class="tab-btn"        id="tab-view"   onclick="switchTab('view')">📋 查看</button>
+  </div>
+</div>
+
+<!-- ══════════ PAGE: 登記 ══════════ -->
+<div class="page active" id="page-record">
+
+  <!-- ── SEC A: Home (court tiles) ── -->
+  <div class="sec active" id="sec-home">
+    <div class="home-top">
+      <div class="home-title">選擇場地</div>
+      <div style="display:flex;gap:6px">
+        <button class="import-btn" id="reassign-btn" onclick="openCourtModal()" style="display:none;border-color:var(--orange);color:var(--orange)">⚙ 重新分配</button>
+        <button class="import-btn" onclick="document.getElementById('schedule-file-input').click()">
+          ⬆ 載入賽程
+        </button>
+      </div>
+      <input type="file" id="schedule-file-input" accept=".csv" style="display:none" onchange="loadSchedule(event)">
+    </div>
+    <div class="court-grid">
+      <div class="court-tile" data-court="1" onclick="selectCourtTile(1)">
+        <div class="ct-num">1</div>
+        <div class="ct-name">場地 1</div>
+        <div class="ct-no-data" id="ct-hint-1">未載入賽程</div>
+        <div class="ct-badge" id="ct-badge-1" style="display:none">0</div>
+      </div>
+      <div class="court-tile" data-court="2" onclick="selectCourtTile(2)">
+        <div class="ct-num">2</div>
+        <div class="ct-name">場地 2</div>
+        <div class="ct-no-data" id="ct-hint-2">未載入賽程</div>
+        <div class="ct-badge" id="ct-badge-2" style="display:none">0</div>
+      </div>
+      <div class="court-tile" data-court="3" onclick="selectCourtTile(3)">
+        <div class="ct-num">3</div>
+        <div class="ct-name">場地 3</div>
+        <div class="ct-no-data" id="ct-hint-3">未載入賽程</div>
+        <div class="ct-badge" id="ct-badge-3" style="display:none">0</div>
+      </div>
+      <div class="court-tile" data-court="4" onclick="selectCourtTile(4)">
+        <div class="ct-num">4</div>
+        <div class="ct-name">場地 4</div>
+        <div class="ct-no-data" id="ct-hint-4">未載入賽程</div>
+        <div class="ct-badge" id="ct-badge-4" style="display:none">0</div>
+      </div>
+    </div>
+    <div class="no-schedule-hint" id="no-schedule-hint">
+      <div class="icon">📂</div>
+      <p>點擊右上角「載入賽程」<br>匯入管理員匯出的 DUPR CSV<br>即可依場地看到所有對戰組合</p>
+    </div>
+  </div>
+
+  <!-- ── SEC A2: Court assign ── -->
+  <div class="sec" id="sec-assign">
+    <div class="modal-box">
+      <div class="modal-title">⚙️ 設定場地分配</div>
+      <div class="modal-sub" id="modal-sub" style="color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.6"></div>
+      <div class="field-label" style="margin-bottom:8px">分幾個場地？</div>
+      <div class="court-count-row">
+        <button class="cc-btn" data-n="1" onclick="selectCourtCount(1)">1</button>
+        <button class="cc-btn" data-n="2" onclick="selectCourtCount(2)">2</button>
+        <button class="cc-btn" data-n="3" onclick="selectCourtCount(3)">3</button>
+        <button class="cc-btn selected" data-n="4" onclick="selectCourtCount(4)">4</button>
+      </div>
+      <div class="field-label" style="margin-bottom:8px">分配預覽</div>
+      <div class="assign-preview" id="assign-preview"></div>
+      <button class="btn btn-primary" onclick="confirmCourtAssign()" style="margin-top:4px">✅ 確認分配</button>
+      <button class="btn btn-secondary" onclick="showSec('home')">取消</button>
+    </div>
+  </div>
+
+  <!-- ── SEC B: Court match list ── -->
+  <div class="sec" id="sec-court-list">
+    <div class="cl-header">
+      <button class="back-btn" onclick="showSec('home')">←</button>
+      <div class="cl-title" id="cl-title">場地 1</div>
+      <div class="cl-sub" id="cl-sub"></div>
+    </div>
+    <div id="cl-match-list"></div>
+    <button class="cl-add-manual" onclick="startManualEntry()">＋ 手動新增一場</button>
+  </div>
+
+  <!-- ── SEC Q: Quick score input ── -->
+  <div class="sec" id="sec-quick">
+    <div class="card">
+      <!-- header: badge + progress + close -->
+      <div class="qs-header">
+        <span class="qs-badge" id="qs-badge">#1</span>
+        <span class="qs-progress" id="qs-progress"></span>
+        <button class="qs-close" onclick="backToCourtList()">×</button>
+      </div>
+
+      <!-- mini game log -->
+      <div class="qs-gamelog" id="qs-gamelog"></div>
+
+      <!-- Phase 1: pick winner -->
+      <div id="qs-phase-winner">
+        <div class="qs-pick-title" id="qs-pick-title">請點選勝隊 WINNER</div>
+        <div class="qs-teams">
+          <div class="qs-team-btn side-a" onclick="qsPickWinner('a')">
+            <div class="qs-tside">🟠 A 隊</div>
+            <div class="qs-tname" id="qs-name-a">—</div>
+            <div class="qs-tid" id="qs-id-a"></div>
+          </div>
+          <div class="qs-team-btn side-b" onclick="qsPickWinner('b')">
+            <div class="qs-tside">🔵 B 隊</div>
+            <div class="qs-tname" id="qs-name-b">—</div>
+            <div class="qs-tid" id="qs-id-b"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 2: enter score -->
+      <div id="qs-phase-score" style="display:none">
+        <div class="qs-score-title" id="qs-score-title">第 1 局比分</div>
+        <div class="qs-score-sub" id="qs-score-sub">勝方得分</div>
+
+        <div class="qs-win-row">
+          <div class="qs-win-label">勝方</div>
+          <button class="qs-win-adj" onclick="qsAdjWin(-1)">−</button>
+          <div class="qs-win-num" id="qs-win-num">11</div>
+          <button class="qs-win-adj" onclick="qsAdjWin(+1)">+</button>
+        </div>
+
+        <div class="qs-lose-label">敗方得分（點選）</div>
+        <div class="qs-loser-grid" id="qs-loser-grid"></div>
+        <div style="margin-top:10px;text-align:center;color:var(--muted);font-size:12px">
+          選擇敗方分數即自動進入下一步
+        </div>
+      </div>
+
+      <!-- Phase 3: confirm -->
+      <div id="qs-phase-confirm" style="display:none">
+        <div class="qs-pick-title">比賽結果確認</div>
+        <div class="summary" id="qs-confirm-games"></div>
+        <div class="qs-series" id="qs-series">
+          <span class="score-a">0</span> : <span class="score-b">0</span>
+        </div>
+        <div class="winner-banner">
+          <div class="winner-label">🏆 獲勝隊伍</div>
+          <div class="winner-name" id="qs-confirm-winner">—</div>
+        </div>
+        <button class="btn btn-primary" onclick="qsConfirm()">✅ 確認</button>
+        <button class="btn btn-secondary" onclick="qsReset()" style="margin-top:8px">🔄 重新輸入</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SEC C: Score wizard ── -->
+  <div class="sec" id="sec-wizard">
+    <div class="wizard-header">
+      <button class="back-btn" id="wizard-back-btn" onclick="wizardBack()">←</button>
+      <div class="wizard-title" id="wizard-title">輸入分數</div>
+      <div class="progress">
+        <div class="progress-dot" id="p1"></div>
+        <div class="progress-dot" id="p2"></div>
+        <div class="progress-dot" id="p3"></div>
+      </div>
+    </div>
+    <div class="card">
+
+      <!-- STEP 1: 選手 (手動) -->
+      <div class="step active" id="step1">
+        <div class="step-title">賽事資料</div>
+        <div class="step-subtitle">輸入選手姓名與 DUPR ID</div>
+        <div class="type-toggle">
+          <button class="type-btn selected" id="type-singles" onclick="setType('singles')">⚡ 單打</button>
+          <button class="type-btn"          id="type-doubles" onclick="setType('doubles')">👥 雙打</button>
+        </div>
+        <div class="score-type-row">
+          <button class="stype-btn selected" id="stype-sideout"       onclick="setScoreType('SIDEOUT')">傳統 SIDEOUT</button>
+          <button class="stype-btn"          id="stype-rally_scoring" onclick="setScoreType('RALLY_SCORING')">全分 RALLY</button>
+        </div>
+        <div class="field-row">
+          <div class="field-label">活動名稱</div>
+          <input class="field-input" id="event-name" type="text" value="MCVS Club Match">
+        </div>
+        <div class="field-row">
+          <div class="field-label">比賽日期</div>
+          <input class="field-input" id="match-date" type="date">
+        </div>
+        <div class="team-block">
+          <div class="team-label a">🟠 隊伍 A</div>
+          <div class="player-row">
+            <input class="field-input" id="a1"  type="text" placeholder="選手 1 姓名 *" oninput="checkStep1()">
+            <input class="field-input small" id="a1d" type="text" placeholder="DUPR ID（選填）">
+          </div>
+          <div class="player-row" id="a2-row" style="display:none">
+            <input class="field-input" id="a2"  type="text" placeholder="選手 2 姓名 *" oninput="checkStep1()">
+            <input class="field-input small" id="a2d" type="text" placeholder="DUPR ID（選填）">
+          </div>
+        </div>
+        <div class="team-block">
+          <div class="team-label b">🔵 隊伍 B</div>
+          <div class="player-row">
+            <input class="field-input" id="b1"  type="text" placeholder="選手 1 姓名 *" oninput="checkStep1()">
+            <input class="field-input small" id="b1d" type="text" placeholder="DUPR ID（選填）">
+          </div>
+          <div class="player-row" id="b2-row" style="display:none">
+            <input class="field-input" id="b2"  type="text" placeholder="選手 2 姓名 *" oninput="checkStep1()">
+            <input class="field-input small" id="b2d" type="text" placeholder="DUPR ID（選填）">
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btn-s1-next" onclick="goWizardStep(2)" disabled>下一步 →</button>
+      </div>
+
+      <!-- STEP 2: 分數 -->
+      <div class="step" id="step2">
+        <div class="step-title">登記比分</div>
+        <div class="step-subtitle" id="step2-subtitle">每局分開記錄，最多 5 局</div>
+
+        <!-- Match display card (schedule mode) -->
+        <div id="match-display" style="display:none">
+          <div class="match-display">
+            <div class="md-court-bar">
+              <span id="md-court-label">場地 1</span>
+              <span id="md-match-progress">第 1 場 / 共 1 場</span>
+            </div>
+            <div class="md-body">
+              <div class="md-team">
+                <div class="md-team-name a" id="md-a-name">—</div>
+                <div class="md-team-ids" id="md-a-ids"></div>
+              </div>
+              <div class="md-vs">VS</div>
+              <div class="md-team" style="text-align:right">
+                <div class="md-team-name b" id="md-b-name">—</div>
+                <div class="md-team-ids" id="md-b-ids" style="text-align:right"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="game-row">
+          <div class="game-label">第 1 局</div>
+          <div class="game-scores">
+            <div class="score-side"><button class="score-adj" onclick="adj(1,'a',-1)">−</button><div class="score-num score-a" id="g1a">0</div><button class="score-adj" onclick="adj(1,'a',+1)">+</button></div>
+            <div class="score-sep">:</div>
+            <div class="score-side"><button class="score-adj" onclick="adj(1,'b',-1)">−</button><div class="score-num score-b" id="g1b">0</div><button class="score-adj" onclick="adj(1,'b',+1)">+</button></div>
+          </div>
+        </div>
+        <div class="game-row">
+          <div class="game-label">第 2 局</div>
+          <div class="game-scores">
+            <div class="score-side"><button class="score-adj" onclick="adj(2,'a',-1)">−</button><div class="score-num score-a" id="g2a">0</div><button class="score-adj" onclick="adj(2,'a',+1)">+</button></div>
+            <div class="score-sep">:</div>
+            <div class="score-side"><button class="score-adj" onclick="adj(2,'b',-1)">−</button><div class="score-num score-b" id="g2b">0</div><button class="score-adj" onclick="adj(2,'b',+1)">+</button></div>
+          </div>
+        </div>
+        <div id="game3-section" style="display:none">
+          <div class="game-row">
+            <div class="game-label">第 3 局</div>
+            <div class="game-scores">
+              <div class="score-side"><button class="score-adj" onclick="adj(3,'a',-1)">−</button><div class="score-num score-a" id="g3a">0</div><button class="score-adj" onclick="adj(3,'a',+1)">+</button></div>
+              <div class="score-sep">:</div>
+              <div class="score-side"><button class="score-adj" onclick="adj(3,'b',-1)">−</button><div class="score-num score-b" id="g3b">0</div><button class="score-adj" onclick="adj(3,'b',+1)">+</button></div>
+            </div>
+          </div>
+        </div>
+        <div id="game4-section" style="display:none">
+          <div class="game-row">
+            <div class="game-label">第 4 局</div>
+            <div class="game-scores">
+              <div class="score-side"><button class="score-adj" onclick="adj(4,'a',-1)">−</button><div class="score-num score-a" id="g4a">0</div><button class="score-adj" onclick="adj(4,'a',+1)">+</button></div>
+              <div class="score-sep">:</div>
+              <div class="score-side"><button class="score-adj" onclick="adj(4,'b',-1)">−</button><div class="score-num score-b" id="g4b">0</div><button class="score-adj" onclick="adj(4,'b',+1)">+</button></div>
+            </div>
+          </div>
+        </div>
+        <div id="game5-section" style="display:none">
+          <div class="game-row">
+            <div class="game-label">第 5 局</div>
+            <div class="game-scores">
+              <div class="score-side"><button class="score-adj" onclick="adj(5,'a',-1)">−</button><div class="score-num score-a" id="g5a">0</div><button class="score-adj" onclick="adj(5,'a',+1)">+</button></div>
+              <div class="score-sep">:</div>
+              <div class="score-side"><button class="score-adj" onclick="adj(5,'b',-1)">−</button><div class="score-num score-b" id="g5b">0</div><button class="score-adj" onclick="adj(5,'b',+1)">+</button></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:8px">
+          <div class="game-toggle" id="game-add-btn" onclick="addGame()" style="flex:1">＋ 加一局</div>
+          <div class="game-toggle" id="game-remove-btn" onclick="removeGame()" style="flex:1;display:none;color:var(--red)">✕ 移除最後局</div>
+        </div>
+        <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:9px;margin-bottom:3px">常見比分快速輸入</div>
+        <div class="quick-scores">
+          <button class="quick-btn" onclick="quickScore(11,0)">11:0</button>
+          <button class="quick-btn" onclick="quickScore(11,3)">11:3</button>
+          <button class="quick-btn" onclick="quickScore(11,5)">11:5</button>
+          <button class="quick-btn" onclick="quickScore(11,7)">11:7</button>
+          <button class="quick-btn" onclick="quickScore(11,9)">11:9</button>
+          <button class="quick-btn" onclick="quickScore(15,13)">15:13</button>
+        </div>
+        <div class="divider"></div>
+        <button class="btn btn-primary" id="btn-s2-next" onclick="goWizardStep(3)" disabled>確認比分 →</button>
+      </div>
+
+      <!-- STEP 3: 確認 -->
+      <div class="step" id="step3">
+        <div class="step-title">確認資料</div>
+        <div class="step-subtitle">確認後送出</div>
+        <div class="summary">
+          <div class="summary-row"><span class="summary-label">場地</span><span class="summary-value" id="sum-court">—</span></div>
+          <div class="summary-row"><span class="summary-label">活動</span><span class="summary-value" id="sum-event">—</span></div>
+          <div class="summary-row"><span class="summary-label">日期</span><span class="summary-value" id="sum-date">—</span></div>
+          <div class="summary-row"><span class="summary-label">賽制</span><span class="summary-value" id="sum-type">—</span></div>
+          <div class="summary-row"><span class="summary-label">🟠 A</span><span class="summary-value" id="sum-a">—</span></div>
+          <div class="summary-row"><span class="summary-label">🔵 B</span><span class="summary-value" id="sum-b">—</span></div>
+        </div>
+        <div class="summary-score" id="sum-scores">—</div>
+        <div class="winner-banner">
+          <div class="winner-label">🏆 獲勝隊伍</div>
+          <div class="winner-name" id="sum-winner">—</div>
+        </div>
+        <button class="btn btn-primary" id="btn-submit" onclick="submitScore()">✅ 儲存並登記</button>
+      </div>
+
+    </div><!-- .card -->
+  </div><!-- #sec-wizard -->
+
+  <!-- ── SEC D: Success ── -->
+  <div class="sec" id="sec-success">
+    <div class="card">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">登記成功！</div>
+      <div class="success-sub" id="success-detail"></div>
+      <button class="btn btn-blue" onclick="downloadCSV()">
+        ⬇️ 下載 DUPR CSV <span class="csv-count" id="csv-count">0</span>
+      </button>
+      <button class="btn btn-secondary" onclick="copyResult()" style="margin-top:7px">📋 複製結果</button>
+      <button class="btn btn-primary" onclick="goNextMatch()" style="margin-top:7px" id="btn-next-match">下一場 →</button>
+      <button class="btn btn-secondary" onclick="backToCourtList()" style="margin-top:7px">← 回場地列表</button>
+      <div style="color:var(--muted);font-size:11px;text-align:center;margin-top:14px;line-height:1.6">
+        可至 <strong>DUPR → Club → Upload CSV</strong> 匯入
+      </div>
+    </div>
+  </div>
+
+</div><!-- #page-record -->
+
+<!-- ══════════ PAGE: 查看 ══════════ -->
+<div class="page" id="page-view">
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('csv-file-input').click()"
+       ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)">
+    <div class="drop-zone-icon">📂</div>
+    <div class="drop-zone-text">點擊或拖放 CSV 檔案</div>
+    <div class="drop-zone-sub">支援 DUPR 標準格式（含 [Court:N] 場地標記）</div>
+  </div>
+  <input type="file" id="csv-file-input" accept=".csv" onchange="loadCSVFile(event)">
+
+  <div class="import-stats" id="import-stats" style="display:none">
+    <div class="stat-item"><div class="stat-num" id="stat-total">0</div><div class="stat-lbl">總場數</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-singles">0</div><div class="stat-lbl">單打</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-doubles">0</div><div class="stat-lbl">雙打</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-date">—</div><div class="stat-lbl">日期</div></div>
+  </div>
+
+  <div class="court-tabs" id="view-court-tabs" style="display:none">
+    <button class="ct-btn active" data-court="all" onclick="filterCourt('all')">全部 <span class="ct-count" id="ct-count-all">0</span></button>
+    <button class="ct-btn" data-court="1" onclick="filterCourt('1')">🔴 場地 1 <span class="ct-count" id="ct-count-1">0</span></button>
+    <button class="ct-btn" data-court="2" onclick="filterCourt('2')">🔵 場地 2 <span class="ct-count" id="ct-count-2">0</span></button>
+    <button class="ct-btn" data-court="3" onclick="filterCourt('3')">🟢 場地 3 <span class="ct-count" id="ct-count-3">0</span></button>
+    <button class="ct-btn" data-court="4" onclick="filterCourt('4')">🟠 場地 4 <span class="ct-count" id="ct-count-4">0</span></button>
+    <button class="ct-btn" data-court="0" onclick="filterCourt('0')" id="ct-btn-unassigned" style="display:none">⬜ 未分配 <span class="ct-count" id="ct-count-0">0</span></button>
+  </div>
+
+  <div class="match-list" id="view-match-list">
+    <div class="no-matches" id="view-empty"><div style="font-size:40px;margin-bottom:10px">📋</div><div>尚未匯入比賽資料<br>請上傳 DUPR CSV 檔案</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   SHARED DATA
+═══════════════════════════════════════════ */
+let scheduleMatches = [];   // from CSV: scheduled matches (with/without scores)
+let viewMatches     = [];   // for the view tab
+let activeCourtFilter = 'all';
+
+/* ═══════════════════════════════════════════
+   RECORD STATE
+═══════════════════════════════════════════ */
+const st = {
+  court: null, type:'singles', scoreType:'SIDEOUT',
+  numGames: 2,
+  g: {1:{a:0,b:0},2:{a:0,b:0},3:{a:0,b:0},4:{a:0,b:0},5:{a:0,b:0}},
+  prefillIdx: null,   // index in scheduleMatches if coming from list
+  _last: null,
+};
+
+document.getElementById('match-date').value = new Date().toISOString().slice(0,10);
+
+/* ── Tab ── */
+function switchTab(tab) {
+  ['record','view'].forEach(t => {
+    document.getElementById('page-'+t).classList.toggle('active', t===tab);
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='view' && !viewMatches.length) autoLoadView();
+}
+
+/* ── Section ── */
+function showSec(id) {
+  document.querySelectorAll('#page-record .sec').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ── Court tile click ── */
+function selectCourtTile(n) {
+  st.court = n;
+  const matches = scheduleMatches.filter(m => m.court === n);
+  if (matches.length > 0) {
+    showCourtList(n, matches);
+  } else {
+    // No schedule — go to manual entry
+    startManualEntry();
+  }
+}
+
+/* ── Court List ── */
+function showCourtList(n, matches) {
+  st.court = n;
+  const colors = {1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22'};
+  document.getElementById('cl-title').textContent = `場地 ${n}`;
+  document.getElementById('cl-title').style.color = colors[n]||'var(--text)';
+
+  const scored = matches.filter(m=>m._scored).length;
+  document.getElementById('cl-sub').textContent = `${scored}/${matches.length} 場完成`;
+
+  const list = document.getElementById('cl-match-list');
+  list.innerHTML = matches.map((m, i) => renderMatchItem(m, i)).join('');
+  showSec('court-list');
+}
+
+function renderMatchItem(m, i) {
+  const scored = !!m._scored;
+  const typeTag = m.type==='doubles'
+    ? '<span class="mi-tag doubles">雙打</span>'
+    : '<span class="mi-tag singles">單打</span>';
+
+  // ID display
+  const idA = m.type==='doubles'
+    ? [m.playerA1DuprId,m.playerA2DuprId].filter(Boolean).join(' / ')
+    : m.playerA1DuprId||'';
+  const idB = m.type==='doubles'
+    ? [m.playerB1DuprId,m.playerB2DuprId].filter(Boolean).join(' / ')
+    : m.playerB1DuprId||'';
+
+  let scoreHtml = '';
+  if (scored) {
+    const pills = Object.entries(m.games).map(([g,sc])=>{
+      const cls = sc.a>sc.b?'wa':'wb';
+      return `<span class="mi-pill ${cls}">${sc.a}:${sc.b}</span>`;
+    }).join('');
+    scoreHtml = `<div class="mi-score"><div class="mi-score-pills">${pills}</div></div>`;
+  } else {
+    scoreHtml = `<div class="mi-score" style="color:var(--muted);font-size:11px">點擊輸入</div>`;
+  }
+
+  const winnerA = m._scored && m.winner===m.teamA;
+  const winnerB = m._scored && m.winner===m.teamB;
+
+  const onclick = scored ? '' : `onclick="startFromSchedule(${i})"`;
+  return `
+  <div class="match-item ${scored?'scored':''}" data-court="${m.court}" ${onclick}>
+    <div class="mi-top">
+      <div class="mi-tags">${typeTag}</div>
+      ${scored
+        ? `<span class="mi-status-done">✅ 已完成</span>`
+        : `<span class="mi-status-pending">⏳ 待輸入</span>`}
+    </div>
+    <div class="mi-matchup">
+      <div class="mi-team">
+        <div class="mi-team-name ${winnerA?'winner':''}">${winnerA?'🏆 ':''}🟠 ${m.teamA}</div>
+        ${idA?`<div class="mi-team-id">${idA}</div>`:''}
+      </div>
+      ${scoreHtml}
+      <div class="mi-team" style="text-align:right">
+        <div class="mi-team-name ${winnerB?'winner':''}">${winnerB?'🏆 ':''}🔵 ${m.teamB}</div>
+        ${idB?`<div class="mi-team-id">${idB}</div>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════
+   QUICK SCORE
+═══════════════════════════════════════ */
+const qs = {
+  matchIdx: null,  // global index in scheduleMatches
+  m: null,
+  games: [],       // [{side:'a'|'b', win:11, lose:7}]
+  winScore: 11,
+  selectedSide: null,
+};
+
+function qsShowPhase(p){
+  ['winner','score','confirm'].forEach(x=>{
+    document.getElementById('qs-phase-'+x).style.display = x===p?'':'none';
+  });
+}
+
+function qsUpdateLog(){
+  const el = document.getElementById('qs-gamelog');
+  if(!qs.games.length){ el.innerHTML=''; return; }
+  el.innerHTML = qs.games.map((g,i)=>{
+    const sa = g.side==='a'?g.win:g.lose;
+    const sb = g.side==='b'?g.win:g.lose;
+    const cls = g.side==='a'?'wa':'wb';
+    return `<span class="qs-gamelog-pill ${cls}">局${i+1}: ${sa}:${sb}</span>`;
+  }).join('');
+}
+
+function qsPickWinner(side){
+  qs.selectedSide = side;
+  qs.winScore = 11;
+  const gameNum = qs.games.length + 1;
+  const winnerName = side==='a' ? qs.m.teamA : qs.m.teamB;
+  document.getElementById('qs-score-title').textContent = `第 ${gameNum} 局比分`;
+  document.getElementById('qs-score-sub').textContent = `🏆 ${winnerName} 獲勝`;
+  document.getElementById('qs-win-num').textContent = qs.winScore;
+  qsBuildLoserGrid();
+  qsShowPhase('score');
+}
+
+function qsAdjWin(d){
+  const newVal = qs.winScore + d;
+  if(newVal < 2) return;
+  qs.winScore = newVal;
+  document.getElementById('qs-win-num').textContent = newVal;
+  qsBuildLoserGrid();
+}
+
+function qsBuildLoserGrid(){
+  const max = qs.winScore - 1;
+  let html = '';
+  for(let i=0;i<=max;i++){
+    html+=`<button class="qs-loser-btn" onclick="qsPickLose(${i})">${i}</button>`;
+  }
+  document.getElementById('qs-loser-grid').innerHTML = html;
+}
+
+function qsPickLose(loseScore){
+  // record game
+  qs.games.push({side:qs.selectedSide, win:qs.winScore, lose:loseScore});
+  qsUpdateLog();
+
+  const aWins = qs.games.filter(g=>g.side==='a').length;
+  const bWins = qs.games.filter(g=>g.side==='b').length;
+
+  if(aWins>=2 || bWins>=2){
+    // match over
+    qsBuildConfirm(aWins, bWins);
+    qsShowPhase('confirm');
+  } else {
+    // need more games
+    if(qs.games.length===2) showToast('1:1 平手！進入決勝局');
+    const gameNum = qs.games.length + 1;
+    document.getElementById('qs-pick-title').textContent = `第 ${gameNum} 局 — 請點選勝隊`;
+    qsShowPhase('winner');
+  }
+}
+
+function qsBuildConfirm(aWins, bWins){
+  const m = qs.m;
+  let rows = '';
+  qs.games.forEach((g,i)=>{
+    const sa = g.side==='a'?g.win:g.lose;
+    const sb = g.side==='b'?g.win:g.lose;
+    const wName = g.side==='a'?m.teamA:m.teamB;
+    rows+=`<div class="qs-game-row">
+      <span class="qs-game-num">第 ${i+1} 局</span>
+      <span class="qs-game-score"><span class="score-a">${sa}</span> : <span class="score-b">${sb}</span></span>
+      <span class="qs-game-winner">${wName}</span>
+    </div>`;
+  });
+  document.getElementById('qs-confirm-games').innerHTML = rows;
+  document.getElementById('qs-series').innerHTML =
+    `<span class="score-a">${aWins}</span> : <span class="score-b">${bWins}</span>`;
+  document.getElementById('qs-confirm-winner').textContent =
+    aWins>bWins ? m.teamA : m.teamB;
+}
+
+function qsReset(){
+  qs.games=[];
+  qs.selectedSide=null;
+  qsUpdateLog();
+  document.getElementById('qs-pick-title').textContent='請點選勝隊 WINNER';
+  qsShowPhase('winner');
+}
+
+function qsConfirm(){
+  const m = qs.m;
+  const gamesObj={};
+  qs.games.forEach((g,i)=>{
+    gamesObj[i+1]={
+      a: g.side==='a'?g.win:g.lose,
+      b: g.side==='b'?g.win:g.lose,
+    };
+  });
+  const aWins=qs.games.filter(g=>g.side==='a').length;
+  const bWins=qs.games.filter(g=>g.side==='b').length;
+
+  const payload={
+    court:st.court, type:m.type, scoreType:m.scoreType||'SIDEOUT',
+    event:`${m.displayEvent||'MCVS Club Match'} [Court:${st.court}]`,
+    date:m.date||new Date().toISOString().slice(0,10),
+    playerA1:m.playerA1, playerA1DuprId:m.playerA1DuprId||'',
+    playerA2:m.playerA2||'', playerA2DuprId:m.playerA2DuprId||'',
+    playerB1:m.playerB1, playerB1DuprId:m.playerB1DuprId||'',
+    playerB2:m.playerB2||'', playerB2DuprId:m.playerB2DuprId||'',
+    games:gamesObj, numGames:qs.games.length,
+    teamA:m.teamA, teamB:m.teamB,
+    winner:aWins>bWins?m.teamA:m.teamB,
+    timestamp:new Date().toISOString(),
+  };
+
+  if(qs.matchIdx!==null && scheduleMatches[qs.matchIdx]){
+    const sm=scheduleMatches[qs.matchIdx];
+    sm._scored=true; sm.games=gamesObj;
+    sm.numGames=qs.games.length; sm.winner=payload.winner;
+  }
+
+  const history=JSON.parse(localStorage.getItem('mcvs_matches')||'[]');
+  history.unshift(payload);
+  localStorage.setItem('mcvs_matches',JSON.stringify(history.slice(0,200)));
+  st._last=payload;
+
+  document.getElementById('success-detail').textContent=`場地 ${st.court}　${m.teamA} vs ${m.teamB}`;
+  document.getElementById('csv-count').textContent=history.length;
+
+  const courtMatches=scheduleMatches.filter(x=>x.court===st.court);
+  const remaining=courtMatches.filter(x=>!x._scored).length;
+  const nextBtn=document.getElementById('btn-next-match');
+  nextBtn.textContent=remaining>0?`下一場 →（還有 ${remaining} 場）`:'🎉 全部完成！回場地列表';
+  showSec('success');
+}
+
+/* ── Start score entry from schedule ── */
+function startFromSchedule(rawIdx) {
+  const courtMatches = scheduleMatches.filter(m=>m.court===st.court);
+  const m = courtMatches[rawIdx];
+  if (!m || m._scored) return;
+
+  st.prefillIdx = scheduleMatches.indexOf(m);
+
+  // Pre-fill hidden fields (used for submit)
+  document.getElementById('a1').value  = m.playerA1||'';
+  document.getElementById('a1d').value = m.playerA1DuprId||'';
+  document.getElementById('a2').value  = m.playerA2||'';
+  document.getElementById('a2d').value = m.playerA2DuprId||'';
+  document.getElementById('b1').value  = m.playerB1||'';
+  document.getElementById('b1d').value = m.playerB1DuprId||'';
+  document.getElementById('b2').value  = m.playerB2||'';
+  document.getElementById('b2d').value = m.playerB2DuprId||'';
+  document.getElementById('event-name').value = m.displayEvent || m.event || 'MCVS Club Match';
+  if (m.date) document.getElementById('match-date').value = m.date;
+  setType(m.type||'singles');
+  setScoreType(m.scoreType||'SIDEOUT');
+
+  // Init quick score
+  qs.matchIdx = st.prefillIdx;
+  qs.m = m;
+  qs.games = [];
+  qs.selectedSide = null;
+
+  // Set badge & progress
+  const total   = courtMatches.length;
+  const current = rawIdx + 1;
+  document.getElementById('qs-badge').textContent    = `#${current}`;
+  document.getElementById('qs-progress').textContent = `第 ${current} 場 / 共 ${total} 場`;
+
+  // Team names & IDs
+  const idA = m.type==='doubles'
+    ? [m.playerA1DuprId,m.playerA2DuprId].filter(Boolean).join(' / ')
+    : (m.playerA1DuprId||'');
+  const idB = m.type==='doubles'
+    ? [m.playerB1DuprId,m.playerB2DuprId].filter(Boolean).join(' / ')
+    : (m.playerB1DuprId||'');
+
+  document.getElementById('qs-name-a').textContent = m.teamA;
+  document.getElementById('qs-name-b').textContent = m.teamB;
+  document.getElementById('qs-id-a').textContent   = idA;
+  document.getElementById('qs-id-b').textContent   = idB;
+
+  qsUpdateLog();
+  document.getElementById('qs-pick-title').textContent = '請點選勝隊 WINNER';
+  qsShowPhase('winner');
+  showSec('quick');
+}
+
+/* ── Go to next unscored match ── */
+function goNextMatch() {
+  const courtMatches = scheduleMatches.filter(m=>m.court===st.court);
+  const nextIdx = courtMatches.findIndex(m=>!m._scored);
+  if (nextIdx >= 0) {
+    startFromSchedule(nextIdx);
+  } else {
+    // All done!
+    showToast(`🎉 場地 ${st.court} 全部完成！`);
+    backToCourtList();
+  }
+}
+
+/* ── Start manual entry ── */
+function startManualEntry() {
+  st.prefillIdx = null;
+  // Clear fields
+  ['a1','a2','b1','b2','a1d','a2d','b1d','b2d'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('prefill-banner').style.display='none';
+  resetScores();
+  setType('singles'); setScoreType('SIDEOUT');
+  document.getElementById('wizard-title').textContent = `場地 ${st.court} — 手動輸入`;
+  showSec('wizard');
+  goWizardStep(1);
+}
+
+/* ── Wizard navigation ── */
+function goWizardStep(n) {
+  document.querySelectorAll('#sec-wizard .step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('step'+n).classList.add('active');
+  // progress: steps 1,2,3
+  for(let i=1;i<=3;i++){
+    const d=document.getElementById('p'+i);
+    d.className='progress-dot';
+    if(i<n) d.classList.add('done');
+    if(i===n) d.classList.add('active');
+  }
+  if(n===3) fillSummary();
+}
+
+function wizardBack() {
+  // Determine current step
+  const active = document.querySelector('#sec-wizard .step.active');
+  const n = active ? parseInt(active.id.replace('step','')) : 2;
+  if (n === 1) {
+    // back to court list or home
+    st.prefillIdx = null;
+    if (st.court && scheduleMatches.some(m=>m.court===st.court)) {
+      showCourtList(st.court, scheduleMatches.filter(m=>m.court===st.court));
+    } else showSec('home');
+  } else if (n === 2) {
+    if (st.prefillIdx !== null) {
+      // came from schedule → back to list
+      showCourtList(st.court, scheduleMatches.filter(m=>m.court===st.court));
+    } else goWizardStep(1);
+  } else {
+    goWizardStep(2);
+  }
+}
+
+function backToCourtList() {
+  if (st.court && scheduleMatches.some(m=>m.court===st.court)) {
+    showCourtList(st.court, scheduleMatches.filter(m=>m.court===st.court));
+  } else showSec('home');
+}
+
+/* ── Player entry ── */
+function setType(t) {
+  st.type=t;
+  document.getElementById('type-singles').classList.toggle('selected',t==='singles');
+  document.getElementById('type-doubles').classList.toggle('selected',t==='doubles');
+  document.getElementById('a2-row').style.display=t==='doubles'?'':'none';
+  document.getElementById('b2-row').style.display=t==='doubles'?'':'none';
+  checkStep1();
+}
+function setScoreType(t) {
+  st.scoreType=t;
+  document.getElementById('stype-sideout').classList.toggle('selected',t==='SIDEOUT');
+  document.getElementById('stype-rally_scoring').classList.toggle('selected',t==='RALLY_SCORING');
+}
+function checkStep1() {
+  const a1=v('a1'),b1=v('b1'),a2=v('a2'),b2=v('b2');
+  const dbl=st.type==='doubles';
+  document.getElementById('btn-s1-next').disabled=!(a1&&b1&&(!dbl||(a2&&b2)));
+}
+function v(id){return document.getElementById(id).value.trim();}
+
+/* ── Score adj ── */
+function adj(game,side,delta){
+  st.g[game][side]=Math.max(0,st.g[game][side]+delta);
+  document.getElementById('g'+game+side).textContent=st.g[game][side];
+  checkScores();
+}
+function quickScore(sa,sb){
+  for(let g=1;g<=st.numGames;g++){
+    if(st.g[g].a===0&&st.g[g].b===0){
+      st.g[g].a=sa;st.g[g].b=sb;
+      document.getElementById('g'+g+'a').textContent=sa;
+      document.getElementById('g'+g+'b').textContent=sb;
+      checkScores();return;
+    }
+  }
+  showToast('所有局都已有分數');
+}
+function addGame(){
+  if(st.numGames>=5){showToast('最多 5 局');return;}
+  st.numGames++;
+  document.getElementById('game'+st.numGames+'-section').style.display='';
+  document.getElementById('game-remove-btn').style.display='';
+  if(st.numGames===5)document.getElementById('game-add-btn').style.display='none';
+  checkScores();
+}
+function removeGame(){
+  if(st.numGames<=2)return;
+  st.g[st.numGames]={a:0,b:0};
+  document.getElementById('g'+st.numGames+'a').textContent='0';
+  document.getElementById('g'+st.numGames+'b').textContent='0';
+  document.getElementById('game'+st.numGames+'-section').style.display='none';
+  st.numGames--;
+  document.getElementById('game-add-btn').style.display='';
+  if(st.numGames===2)document.getElementById('game-remove-btn').style.display='none';
+  checkScores();
+}
+function checkScores(){
+  let ok=true;
+  for(let g=1;g<=st.numGames;g++){
+    const ga=st.g[g].a,gb=st.g[g].b;
+    if(ga===gb||(ga===0&&gb===0)){ok=false;break;}
+  }
+  document.getElementById('btn-s2-next').disabled=!ok;
+}
+function resetScores(){
+  st.numGames=2;
+  st.g={1:{a:0,b:0},2:{a:0,b:0},3:{a:0,b:0},4:{a:0,b:0},5:{a:0,b:0}};
+  [1,2,3,4,5].forEach(g=>['a','b'].forEach(s=>document.getElementById('g'+g+s).textContent='0'));
+  [3,4,5].forEach(g=>document.getElementById('game'+g+'-section').style.display='none');
+  document.getElementById('game-add-btn').style.display='';
+  document.getElementById('game-remove-btn').style.display='none';
+  document.getElementById('btn-s2-next').disabled=true;
+}
+
+/* ── Summary ── */
+function fillSummary(){
+  const doubles=st.type==='doubles';
+  const teamA=doubles?`${v('a1')} / ${v('a2')}`:v('a1');
+  const teamB=doubles?`${v('b1')} / ${v('b2')}`:v('b1');
+  document.getElementById('sum-court').textContent=`場地 ${st.court}`;
+  document.getElementById('sum-event').textContent=v('event-name')||'MCVS Club Match';
+  document.getElementById('sum-date').textContent=document.getElementById('match-date').value;
+  document.getElementById('sum-type').textContent=doubles?'雙打':'單打';
+  document.getElementById('sum-a').textContent=teamA;
+  document.getElementById('sum-b').textContent=teamB;
+  const games=Array.from({length:st.numGames},(_,i)=>i+1);
+  document.getElementById('sum-scores').innerHTML=games.map(g=>
+    `局${g} <span class="score-a">${st.g[g].a}</span>:<span class="score-b">${st.g[g].b}</span>`
+  ).join('　');
+  let wA=0,wB=0;
+  games.forEach(g=>{if(st.g[g].a>st.g[g].b)wA++;else wB++;});
+  document.getElementById('sum-winner').textContent=wA>wB?teamA:teamB;
+}
+
+/* ── Submit ── */
+function submitScore(){
+  const btn=document.getElementById('btn-submit');
+  btn.disabled=true;btn.textContent='儲存中...';
+  const doubles=st.type==='doubles';
+  const teamA=doubles?`${v('a1')} / ${v('a2')}`:v('a1');
+  const teamB=doubles?`${v('b1')} / ${v('b2')}`:v('b1');
+  const games=Array.from({length:st.numGames},(_,i)=>i+1);
+  let wA=0,wB=0;
+  games.forEach(g=>{if(st.g[g].a>st.g[g].b)wA++;else wB++;});
+
+  const baseEvent=v('event-name')||'MCVS Club Match';
+  const payload={
+    court:st.court,type:st.type,scoreType:st.scoreType,
+    event:`${baseEvent} [Court:${st.court}]`,
+    date:document.getElementById('match-date').value,
+    playerA1:v('a1'),playerA1DuprId:v('a1d'),
+    playerA2:v('a2'),playerA2DuprId:v('a2d'),
+    playerB1:v('b1'),playerB1DuprId:v('b1d'),
+    playerB2:v('b2'),playerB2DuprId:v('b2d'),
+    games:JSON.parse(JSON.stringify(st.g)),
+    numGames:st.numGames,
+    teamA,teamB,winner:wA>wB?teamA:teamB,
+    timestamp:new Date().toISOString(),
+  };
+
+  // Mark schedule match as scored
+  if(st.prefillIdx!==null && scheduleMatches[st.prefillIdx]){
+    const sm=scheduleMatches[st.prefillIdx];
+    sm._scored=true;
+    sm.games=JSON.parse(JSON.stringify(st.g));
+    sm.numGames=st.numGames;
+    sm.winner=payload.winner;
+  }
+
+  const history=JSON.parse(localStorage.getItem('mcvs_matches')||'[]');
+  history.unshift(payload);
+  localStorage.setItem('mcvs_matches',JSON.stringify(history.slice(0,200)));
+  st._last=payload;
+
+  document.getElementById('success-detail').textContent=`場地 ${st.court}　${teamA} vs ${teamB}`;
+  document.getElementById('csv-count').textContent=history.length;
+  btn.disabled=false;btn.textContent='✅ 儲存並登記';
+
+  // Update "next match" button label
+  const courtMatches=scheduleMatches.filter(m=>m.court===st.court);
+  const remaining=courtMatches.filter(m=>!m._scored).length;
+  const nextBtn=document.getElementById('btn-next-match');
+  if(remaining>0){
+    nextBtn.textContent=`下一場 →（還有 ${remaining} 場）`;
+    nextBtn.style.display='';
+  }else{
+    nextBtn.textContent='🎉 全部完成！回場地列表';
+  }
+  showSec('success');
+}
+
+/* ── CSV export ── */
+function q(val){return(val!==''&&val!=null)?`"${val}"`:''}
+function buildCSV(matches){
+  const header='matchType,scoreType,event,date,playerA1,playerA1DuprId,playerA2,playerA2DuprId,playerB1,playerB1DuprId,playerB2,playerB2DuprId,teamAGame1,teamBGame1,teamAGame2,teamBGame2,teamAGame3,teamBGame3,teamAGame4,teamBGame4,teamAGame5,teamBGame5';
+  const rows=matches.map(m=>{
+    const type=m.type==='doubles'?'D':'S';
+    const n=m.numGames||2;
+    const sc=[];
+    for(let g=1;g<=5;g++){sc.push(g<=n?q(m.games[g].a):'',g<=n?q(m.games[g].b):'');}
+    return[q(type),q(m.scoreType),q(m.event),q(m.date),q(m.playerA1),q(m.playerA1DuprId),q(m.playerA2||''),q(m.playerA2DuprId||''),q(m.playerB1),q(m.playerB1DuprId),q(m.playerB2||''),q(m.playerB2DuprId||''),...sc].join(',');
+  });
+  return[header,...rows].join('\r\n');
+}
+function downloadCSV(){
+  const matches=JSON.parse(localStorage.getItem('mcvs_matches')||'[]');
+  if(!matches.length){showToast('還沒有任何比賽記錄');return;}
+  const csv=buildCSV(matches);
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const today=new Date().toISOString().slice(0,10);
+  const a=document.createElement('a');
+  a.href=url;a.download=`MCVS_DUPR_${today}.csv`;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  showToast(`已下載 ${matches.length} 場比賽記錄`);
+}
+function copyResult(){
+  const p=st._last;if(!p)return;
+  const n=p.numGames||2;
+  const scores=Array.from({length:n},(_,i)=>`${p.games[i+1].a}:${p.games[i+1].b}`).join('  ');
+  const text=`【MCVS 比賽結果】\n場地：${p.court}　${p.date}\n🟠 ${p.teamA}  vs  🔵 ${p.teamB}\n比分：${scores}\n🏆 勝者：${p.winner}`;
+  navigator.clipboard.writeText(text).then(()=>showToast('已複製到剪貼簿'));
+}
+
+/* ═══════════════════════════════════════════
+   SCHEDULE CSV LOADING (for home page badges)
+═══════════════════════════════════════════ */
+function loadSchedule(e){
+  const file=e.target.files[0];if(!file)return;
+  e.target.value='';
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      scheduleMatches=parseCSV(ev.target.result);
+      viewMatches=scheduleMatches;
+
+      // Check if any match has court info
+      const hasCourt=scheduleMatches.some(m=>m.court>0);
+      if(!hasCourt && scheduleMatches.length>0){
+        // No court info → show assignment modal
+        openCourtModal();
+      }else{
+        updateHomeBadges();
+        showToast(`✅ 載入 ${scheduleMatches.length} 場賽程`);
+      }
+    }catch(err){showToast('CSV 格式有誤');console.error(err);}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+/* ── Court assign modal ── */
+let _pendingCourtCount = 4;
+
+function openCourtModal(){
+  const n = scheduleMatches.length;
+  document.getElementById('modal-sub').innerHTML =
+    `載入了 <strong>${n} 場</strong>比賽，但 CSV 中未包含場地資訊。<br>請選擇要分配幾個場地：`;
+  _pendingCourtCount = n <= 10 ? 2 : 4;
+  document.querySelectorAll('.cc-btn').forEach(b=>{
+    b.classList.toggle('selected', parseInt(b.dataset.n)===_pendingCourtCount);
+  });
+  updateAssignPreview(_pendingCourtCount);
+  showSec('assign');
+}
+
+function selectCourtCount(n){
+  _pendingCourtCount=n;
+  document.querySelectorAll('.cc-btn').forEach(b=>{
+    b.classList.toggle('selected', parseInt(b.dataset.n)===n);
+  });
+  updateAssignPreview(n);
+}
+
+function updateAssignPreview(numCourts){
+  const total=scheduleMatches.length;
+  const base=Math.floor(total/numCourts);
+  const extra=total%numCourts;
+  const colors=['#e74c3c','#3498db','#2ecc71','#e67e22'];
+  let html='';
+  let start=1;
+  for(let c=1;c<=numCourts;c++){
+    const cnt=base+(c<=extra?1:0);
+    const end=start+cnt-1;
+    html+=`<div class="assign-row">
+      <span class="assign-court" style="color:${colors[c-1]||'#888'}">場地 ${c}</span>
+      <span class="assign-count">${cnt} 場</span>
+      <span class="assign-range">第 ${start}～${end} 場</span>
+    </div>`;
+    start+=cnt;
+  }
+  document.getElementById('assign-preview').innerHTML=html;
+}
+
+function confirmCourtAssign(){
+  const numCourts=_pendingCourtCount;
+  const total=scheduleMatches.length;
+  const base=Math.floor(total/numCourts);
+  const extra=total%numCourts;
+  let start=0;
+  for(let c=1;c<=numCourts;c++){
+    const cnt=base+(c<=extra?1:0);
+    for(let i=start;i<start+cnt;i++) scheduleMatches[i].court=c;
+    start+=cnt;
+  }
+  viewMatches=scheduleMatches;
+  showSec('home');
+  updateHomeBadges();
+  showToast(`✅ 已分配到 ${numCourts} 個場地`);
+}
+
+function updateHomeBadges(){
+  const hint=document.getElementById('no-schedule-hint');
+  // Show reassign button if schedule loaded
+  document.getElementById('reassign-btn').style.display=scheduleMatches.length?'':'none';
+  let hasAny=false;
+  [1,2,3,4].forEach(n=>{
+    const matches=scheduleMatches.filter(m=>m.court===n);
+    const badge=document.getElementById('ct-badge-'+n);
+    const hintEl=document.getElementById('ct-hint-'+n);
+    if(matches.length>0){
+      hasAny=true;
+      const done=matches.filter(m=>m._scored).length;
+      badge.textContent=done<matches.length?`${matches.length-done} 待輸入`:`${matches.length} 完成`;
+      badge.className='ct-badge'+(done===matches.length?' done':'');
+      badge.style.display='';
+      hintEl.style.display='none';
+    }else{
+      badge.style.display='none';
+      hintEl.style.display='';
+    }
+  });
+  hint.style.display=hasAny?'none':'';
+}
+
+/* ═══════════════════════════════════════════
+   CSV PARSER (shared)
+═══════════════════════════════════════════ */
+function parseCSVLine(line){
+  const result=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){inQ=!inQ;}
+    else if(c===','&&!inQ){result.push(cur.trim());cur='';}
+    else cur+=c;
+  }
+  result.push(cur.trim());
+  return result;
+}
+function detectCourt(eventName){
+  if(!eventName)return 0;
+  let m=eventName.match(/\[Court:(\d)\]/i);if(m)return parseInt(m[1]);
+  m=eventName.match(/court[\s\-_]?(\d)/i);if(m)return parseInt(m[1]);
+  m=eventName.match(/場地[\s]?(\d)/);if(m)return parseInt(m[1]);
+  m=eventName.match(/\bC[\s\-]?([1-4])\b/i);if(m)return parseInt(m[1]);
+  return 0;
+}
+function parseCSV(text){
+  text=text.replace(/^﻿/,'');
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2)throw new Error('Empty CSV');
+  const header=parseCSVLine(lines[0]).map(h=>h.toLowerCase().replace(/"/g,''));
+  const idx=f=>header.indexOf(f);
+  const iA1=idx('playera1'),iA1D=idx('playera1duprid');
+  const iA2=idx('playera2'),iA2D=idx('playera2duprid');
+  const iB1=idx('playerb1'),iB1D=idx('playerb1duprid');
+  const iB2=idx('playerb2'),iB2D=idx('playerb2duprid');
+  const scoreIdx=[];
+  for(let g=1;g<=5;g++)scoreIdx.push([idx(`teamagame${g}`),idx(`teambgame${g}`)]);
+  const matches=[];
+  for(let i=1;i<lines.length;i++){
+    const f=parseCSVLine(lines[i]);
+    if(f.length<4)continue;
+    const clean=s=>(s||'').replace(/^"|"$/g,'').trim();
+    const event=clean(f[idx('event')]);
+    const court=detectCourt(event);
+    const displayEvent=event.replace(/\s*\[Court:\d\]/i,'').trim();
+    const games={};let numGames=0;
+    for(let g=0;g<5;g++){
+      const[ai,bi]=scoreIdx[g];
+      if(ai<0||bi<0)continue;
+      const sa=clean(f[ai]),sb=clean(f[bi]);
+      if(sa!==''&&sb!==''){
+        const a=parseInt(sa)||0, b=parseInt(sb)||0;
+        // 只有兩隊分數不同才算有效比賽（0:0 或平手 = 尚未進行）
+        if(a!==b){ games[g+1]={a,b}; numGames=g+1; }
+      }
+    }
+    let wA=0,wB=0;
+    Object.values(games).forEach(g=>{if(g.a>g.b)wA++;else wB++;});
+    const type=clean(f[idx('matchtype')]).toUpperCase();
+    const doubles=type==='D';
+    const pA1=clean(f[iA1]),pA1D=clean(f[iA1D]);
+    const pA2=clean(f[iA2]),pA2D=clean(f[iA2D]);
+    const pB1=clean(f[iB1]),pB1D=clean(f[iB1D]);
+    const pB2=clean(f[iB2]),pB2D=clean(f[iB2D]);
+    const teamA=doubles&&pA2?`${pA1} / ${pA2}`:pA1;
+    const teamB=doubles&&pB2?`${pB1} / ${pB2}`:pB1;
+    const _scored=numGames>0;
+    matches.push({
+      court,displayEvent,event,
+      date:clean(f[idx('date')]),
+      type:doubles?'doubles':'singles',
+      scoreType:clean(f[idx('scoretype')]),
+      playerA1:pA1,playerA1DuprId:pA1D,
+      playerA2:pA2,playerA2DuprId:pA2D,
+      playerB1:pB1,playerB1DuprId:pB1D,
+      playerB2:pB2,playerB2DuprId:pB2D,
+      teamA,teamB,games,numGames,
+      winner:_scored?(wA>=wB?teamA:teamB):'',
+      _scored,
+    });
+  }
+  return matches;
+}
+
+/* ═══════════════════════════════════════════
+   VIEW PAGE
+═══════════════════════════════════════════ */
+function dzOver(e){e.preventDefault();document.getElementById('drop-zone').classList.add('drag-over');}
+function dzLeave(){document.getElementById('drop-zone').classList.remove('drag-over');}
+function dzDrop(e){
+  e.preventDefault();dzLeave();
+  const file=e.dataTransfer.files[0];if(file)processViewCSV(file);
+}
+function loadCSVFile(e){
+  const file=e.target.files[0];if(file)processViewCSV(file);
+  e.target.value='';
+}
+function processViewCSV(file){
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      viewMatches=parseCSV(e.target.result);
+      // also update schedule
+      scheduleMatches=viewMatches;
+      updateHomeBadges();
+      renderViewTab();
+      showToast(`✅ 已載入 ${viewMatches.length} 場比賽`);
+    }catch(err){showToast('CSV 格式有誤');console.error(err);}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+function autoLoadView(){
+  const saved=JSON.parse(localStorage.getItem('mcvs_matches')||'[]');
+  if(saved.length){
+    viewMatches=saved.map(m=>{
+      const event=m.event||'';
+      const court=m.court||detectCourt(event);
+      const displayEvent=event.replace(/\s*\[Court:\d\]/i,'').trim();
+      return{...m,court,displayEvent,_scored:true};
+    });
+    renderViewTab();
+  }
+}
+function renderViewTab(){
+  const counts={all:viewMatches.length,1:0,2:0,3:0,4:0,0:0};
+  viewMatches.forEach(m=>{const c=m.court;counts[c]=(counts[c]||0)+1;});
+  const singles=viewMatches.filter(m=>m.type==='singles').length;
+  document.getElementById('stat-total').textContent=viewMatches.length;
+  document.getElementById('stat-singles').textContent=singles;
+  document.getElementById('stat-doubles').textContent=viewMatches.length-singles;
+  const dates=[...new Set(viewMatches.map(m=>m.date))].sort();
+  document.getElementById('stat-date').textContent=dates.length?dates.at(-1):'—';
+  document.getElementById('import-stats').style.display='';
+  ['all','1','2','3','4','0'].forEach(c=>{
+    const el=document.getElementById('ct-count-'+c);
+    if(el)el.textContent=counts[c]||0;
+  });
+  document.getElementById('ct-btn-unassigned').style.display=counts[0]>0?'':'none';
+  document.getElementById('view-court-tabs').style.display='';
+  filterCourt(activeCourtFilter);
+}
+function filterCourt(court){
+  activeCourtFilter=court;
+  document.querySelectorAll('.ct-btn').forEach(b=>b.classList.toggle('active',b.dataset.court===court));
+  const filtered=court==='all'?viewMatches:viewMatches.filter(m=>String(m.court)===court);
+  const list=document.getElementById('view-match-list');
+  if(!filtered.length){
+    list.innerHTML=`<div class="no-matches"><div style="font-size:32px;margin-bottom:8px">🎾</div><div>此場地沒有比賽記錄</div></div>`;
+    return;
+  }
+  list.innerHTML=filtered.map(m=>renderViewCard(m)).join('');
+}
+function renderViewCard(m){
+  const c=m.court||0;
+  const courtLabel=c?`場地 ${c}`:'未分配';
+  const typeLabel=m.type==='doubles'?'雙打':'單打';
+  const isWinnerA=m.winner===m.teamA;
+  const pills=Object.entries(m.games).map(([g,sc])=>{
+    const cls=sc.a>sc.b?'win-a':'win-b';
+    return`<span class="mc-game ${cls}">${sc.a}:${sc.b}</span>`;
+  }).join('');
+  const idA=m.type==='doubles'?[m.playerA1DuprId,m.playerA2DuprId].filter(Boolean).join(' / '):m.playerA1DuprId;
+  const idB=m.type==='doubles'?[m.playerB1DuprId,m.playerB2DuprId].filter(Boolean).join(' / '):m.playerB1DuprId;
+  return`
+  <div class="match-card court-${c}">
+    <div class="mc-header">
+      <div class="mc-tags">
+        <span class="mc-tag court">${courtLabel}</span>
+        <span class="mc-tag type-${m.type==='doubles'?'d':'s'}">${typeLabel}</span>
+        ${m.scoreType?`<span class="mc-tag">${m.scoreType}</span>`:''}
+      </div>
+      <span class="mc-date">${m.date}</span>
+    </div>
+    <div class="mc-matchup">
+      <div class="mc-team ${isWinnerA?'winner':''}">
+        <div class="mc-team-name">🟠 ${m.teamA}${isWinnerA?' 🏆':''}</div>
+        ${idA?`<div class="mc-team-id">${idA}</div>`:''}
+      </div>
+      <div class="mc-score-block"><div class="mc-scores">${pills}</div></div>
+      <div class="mc-team ${!isWinnerA?'winner':''}" style="text-align:right">
+        <div class="mc-team-name">${!isWinnerA?'🏆 ':''}🔵 ${m.teamB}</div>
+        ${idB?`<div class="mc-team-id">${idB}</div>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Toast ── */
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+document.getElementById('tab-view').addEventListener('click',()=>{
+  if(!viewMatches.length)autoLoadView();
+});
+</script>
+</body>
+</html>
