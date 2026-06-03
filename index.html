@@ -282,7 +282,7 @@
     background:#eafaf1;border:2px solid var(--green);border-radius:12px;
     text-align:center;padding:11px;margin-bottom:11px;
   }
-  .winner-label{font-size:11px;color:var(--muted);margin-bottom:3px;}
+  .winner-label{font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px;}
   .winner-name{font-size:36px;font-weight:800;}
 
   /* success */
@@ -1123,24 +1123,30 @@ function qsPickLose(loseScore){
   qsShowPhase('confirm');
 }
 
+/* 去掉「A14」「A12」等前置數字標籤，只顯示暱稱 */
+function stripPrefix(name){
+  return (name||'').replace(/^[A-Za-z]\d+\s+/,'').trim() || name;
+}
+function displayTeam(teamName){
+  return (teamName||'').split(' / ').map(stripPrefix).join(' / ');
+}
+
 function qsBuildConfirm(aWins, bWins){
   const m = qs.m;
   const g = qs.games[0];
   const sa = g.side==='a' ? g.win : g.lose;
   const sb = g.side==='b' ? g.win : g.lose;
-  // 單局：只顯示該局比分
-  document.getElementById('qs-confirm-games').innerHTML = `
-    <div class="qs-game-row">
-      <span class="qs-game-num">比分</span>
-      <span class="qs-game-score">
-        <span class="score-a">${sa}</span> : <span class="score-b">${sb}</span>
-      </span>
-    </div>`;
-  // Big score = actual game score
+
+  // 移除「比分 11:8」那行，大比分已足夠
+  document.getElementById('qs-confirm-games').innerHTML = '';
+
+  // Big score
   document.getElementById('qs-series').innerHTML =
     `<span class="score-a">${sa}</span> : <span class="score-b">${sb}</span>`;
-  document.getElementById('qs-confirm-winner').textContent =
-    g.side==='a' ? m.teamA : m.teamB;
+
+  // 獲勝隊伍：去掉前綴數字
+  const winnerTeam = g.side==='a' ? m.teamA : m.teamB;
+  document.getElementById('qs-confirm-winner').textContent = displayTeam(winnerTeam);
 }
 
 /* ── Phone simulator toggle ── */
