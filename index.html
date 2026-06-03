@@ -928,8 +928,7 @@
       <div class="success-icon">🎉</div>
       <div class="success-title">登記成功！</div>
       <div class="success-sub" id="success-detail"></div>
-      <button class="btn btn-primary" onclick="goNextMatch()" style="margin-top:7px" id="btn-next-match">跳至下一場</button>
-      <button class="btn btn-secondary" onclick="backToCourtList()" style="margin-top:7px">← 回場地列表</button>
+      <div id="success-countdown" style="color:var(--muted);font-size:13px;text-align:center;margin-top:16px"></div>
       <div style="color:var(--muted);font-size:11px;text-align:center;margin-top:14px;line-height:1.6">
         可至 <strong>DUPR → Club → Upload CSV</strong> 匯入
       </div>
@@ -1246,12 +1245,8 @@ function qsConfirm(){
   st._last=payload;
 
   document.getElementById('success-detail').textContent=`場地 ${st.court}　${m.teamA} vs ${m.teamB}`;
-
-  const courtMatches=scheduleMatches.filter(x=>x.court===st.court);
-  const remaining=courtMatches.filter(x=>!x._scored).length;
-  const nextBtn=document.getElementById('btn-next-match');
-  nextBtn.textContent=remaining>0?`跳至下一場（還有 ${remaining} 場）`:'🎉 全部完成！回場地列表';
   showSec('success');
+  startSuccessCountdown();
 }
 
 /* ── Start score entry from schedule ── */
@@ -1369,9 +1364,24 @@ function wizardBack() {
 }
 
 function backToCourtList() {
+  clearTimeout(_successTimer);
   if (st.court && scheduleMatches.some(m=>m.court===st.court)) {
     showCourtList(st.court, scheduleMatches.filter(m=>m.court===st.court));
   } else showSec('home');
+}
+
+let _successTimer = null;
+function startSuccessCountdown() {
+  clearTimeout(_successTimer);
+  let secs = 5;
+  const el = document.getElementById('success-countdown');
+  function tick() {
+    if (el) el.textContent = `${secs} 秒後自動返回場地列表…`;
+    if (secs <= 0) { backToCourtList(); return; }
+    secs--;
+    _successTimer = setTimeout(tick, 1000);
+  }
+  tick();
 }
 
 /* ── Player entry ── */
@@ -1531,18 +1541,8 @@ function submitScore(){
 
   document.getElementById('success-detail').textContent=`場地 ${st.court}　${teamA} vs ${teamB}`;
   btn.disabled=false;btn.textContent='✅ 儲存並登記';
-
-  // Update "next match" button label
-  const courtMatches=scheduleMatches.filter(m=>m.court===st.court);
-  const remaining=courtMatches.filter(m=>!m._scored).length;
-  const nextBtn=document.getElementById('btn-next-match');
-  if(remaining>0){
-    nextBtn.textContent=`跳至下一場（還有 ${remaining} 場）`;
-    nextBtn.style.display='';
-  }else{
-    nextBtn.textContent='🎉 全部完成！回場地列表';
-  }
   showSec('success');
+  startSuccessCountdown();
 }
 
 /* ── CSV export ── */
