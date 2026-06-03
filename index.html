@@ -939,12 +939,16 @@
 
 <!-- ══════════ PAGE: 成績排名 ══════════ -->
 <div class="page" id="page-view">
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;padding:0 2px;">
-    <button class="rk-court-btn active" data-court="all" onclick="setRkCourt('all')">全部</button>
-    <button class="rk-court-btn" data-court="1" onclick="setRkCourt('1')">🔴 場地 1</button>
-    <button class="rk-court-btn" data-court="2" onclick="setRkCourt('2')">🔵 場地 2</button>
-    <button class="rk-court-btn" data-court="3" onclick="setRkCourt('3')">🟢 場地 3</button>
-    <button class="rk-court-btn" data-court="4" onclick="setRkCourt('4')">🟠 場地 4</button>
+  <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;padding:0 2px;">
+    <div>
+      <button class="rk-court-btn active" data-court="all" onclick="setRkCourt('all')">全部</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="rk-court-btn" data-court="1" onclick="setRkCourt('1')">🔴 場地 1</button>
+      <button class="rk-court-btn" data-court="2" onclick="setRkCourt('2')">🔵 場地 2</button>
+      <button class="rk-court-btn" data-court="3" onclick="setRkCourt('3')">🟢 場地 3</button>
+      <button class="rk-court-btn" data-court="4" onclick="setRkCourt('4')">🟠 場地 4</button>
+    </div>
   </div>
   <div id="ranking-wrap"></div>
 </div>
