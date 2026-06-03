@@ -1242,7 +1242,7 @@ function qsConfirm(){
         const winnerTeam = aWins > bWins ? m.teamA : m.teamB;
         const notifyMsg = `🏆 Court ${st.court} · 第 ${(qs.matchIdx||0)+1} 場\n${m.teamA} ${aScore} : ${bScore} ${m.teamB}\n🥇 勝隊：${winnerTeam}`;
         if (window._notifyRef) {
-          window._notifyRef.push({ msg: notifyMsg, ts: Date.now(), did: DSL_DEVICE_ID }).catch(()=>{});
+          window._notifyRef.push({ msg: notifyMsg, ts: Date.now(), did: window._dslDeviceId }).catch(()=>{});
         }
         window.showDslToast(notifyMsg, 5000); // 也在 DSL 自己畫面顯示
       }
@@ -1525,7 +1525,7 @@ function submitScore(){
         const winnerTeam = wA > wB ? teamA : teamB;
         const notifyMsg = `🏆 Court ${st.court} · 第 ${(st.prefillIdx||0)+1} 場\n${teamA} ${aScore} : ${bScore} ${teamB}\n🥇 勝隊：${winnerTeam}`;
         if (window._notifyRef) {
-          window._notifyRef.push({ msg: notifyMsg, ts: Date.now(), did: DSL_DEVICE_ID }).catch(()=>{});
+          window._notifyRef.push({ msg: notifyMsg, ts: Date.now(), did: window._dslDeviceId }).catch(()=>{});
         }
         window.showDslToast(notifyMsg, 5000);
       }
@@ -1943,7 +1943,7 @@ restoreSchedule();
   window._notifyRef       = null;   // notify 路徑 ref
 
   // ── DSL Toast（5 秒顯示）──────────────────────────────────
-  const DSL_DEVICE_ID = (function(){
+  window._dslDeviceId = (function(){
     let id = localStorage.getItem('dsl_device_id');
     if (!id) { id = Math.random().toString(36).slice(2,12); localStorage.setItem('dsl_device_id', id); }
     return id;
@@ -2080,7 +2080,7 @@ restoreSchedule();
       if (!_notifyReady) { _notifyReady = true; return; }
       snap.forEach(child => {
         const d = child.val();
-        if (!d || d.did === DSL_DEVICE_ID) return;
+        if (!d || d.did === window._dslDeviceId) return;
         window.showDslToast(d.msg, 5000);
       });
     });
