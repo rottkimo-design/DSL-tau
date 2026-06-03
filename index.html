@@ -569,6 +569,11 @@
 <div class="top-header">
   <h1>🏓 MCVS 分數登記</h1>
   <p>選手快速登記系統</p>
+  <div id="fb-sync-badge" style="
+    display:none;font-size:11px;font-weight:600;
+    padding:3px 12px;border-radius:999px;margin-bottom:6px;
+    transition:all 0.3s;">
+  </div>
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-record" onclick="switchTab('record')">📝 登記</button>
     <button class="tab-btn"        id="tab-view"   onclick="switchTab('view')">📋 查看</button>
@@ -619,7 +624,7 @@
     </div>
     <div class="no-schedule-hint" id="no-schedule-hint">
       <div class="icon">📂</div>
-      <p>點擊右上角「載入賽程」<br>匯入管理員匯出的 DUPR CSV<br>即可依場地看到所有對戰組合</p>
+      <p id="no-schedule-text">正在連線即時賽程資料…<br>（或點擊右上角「載入賽程」手動匯入 CSV）</p>
     </div>
   </div>
 
@@ -1865,6 +1870,153 @@ function restoreSchedule(){
 
 // 頁面載入時自動還原
 restoreSchedule();
+</script>
+
+<!-- ══════════ FIREBASE REALTIME SYNC ══════════ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+(function initFirebaseSync() {
+  // ── Firebase config（與 NTCPA DUPR Score 共用同一資料庫）──
+  const firebaseConfig = {
+    apiKey:            "[REMOVED]",
+    authDomain:        "ntcpa-dupr-score.firebaseapp.com",
+    databaseURL:       "https://ntcpa-dupr-score-default-rtdb.firebaseio.com",
+    projectId:         "ntcpa-dupr-score",
+    storageBucket:     "ntcpa-dupr-score.firebasestorage.app",
+    messagingSenderId: "905503534420",
+    appId:             "1:905503534420:web:e00ffd9ba58714b1fdacc1"
+  };
+
+  // 監聽的場地 ID（對應 NTCPA 管理後台）
+  const VENUE_ID = 'MCVS_Court';
+
+  let ntcpaVenueName = 'MCVS';
+
+  // ── 狀態 badge ─────────────────────────────────────────────
+  function setBadge(emoji, text, bg, color, border) {
+    const el = document.getElementById('fb-sync-badge');
+    if (!el) return;
+    el.style.display = '';
+    el.textContent = emoji + ' ' + text;
+    el.style.background = bg;
+    el.style.color = color;
+    el.style.border = '1px solid ' + border;
+  }
+  function badgeConnecting() { setBadge('🟡','連線中…','rgba(230,200,0,0.12)','#b45309','rgba(230,200,0,0.4)'); }
+  function badgeOnline(n)    { setBadge('🟢','即時同步 · ' + n + ' 場','rgba(46,204,113,0.12)','#27ae60','rgba(46,204,113,0.35)'); }
+  function badgeOffline()    { setBadge('🔴','連線中斷','rgba(231,76,60,0.10)','#c0392b','rgba(231,76,60,0.35)'); }
+
+  // ── Firebase array/object 轉換（Firebase 會把 array 存成 object）──
+  function toArr(val) {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    return Object.keys(val).sort((a,b)=>Number(a)-Number(b)).map(k=>val[k]);
+  }
+
+  // ── NTCPA 資料 → scheduleMatches 格式 ─────────────────────
+  function ntcpaToScheduleMatches(data) {
+    const players = toArr(data.players);
+    const matches  = toArr(data.matches);
+    const pById    = id => players.find(p => p.id === id) || {};
+    const pname    = p  => p.name || '';
+
+    return matches
+      .filter(m => m.a1 || m.b1)
+      .sort((a, b) => (a.num || 0) - (b.num || 0))
+      .map(m => {
+        const a1 = pById(m.a1), a2 = pById(m.a2);
+        const b1 = pById(m.b1), b2 = pById(m.b2);
+        const isSingles = m.type === 'S';
+        const scoreType = m.matchType === '球球得分' ? 'RALLY_SCORING' : 'SIDEOUT';
+
+        const teamA = isSingles
+          ? pname(a1)
+          : [pname(a1), pname(a2)].filter(Boolean).join(' / ');
+        const teamB = isSingles
+          ? pname(b1)
+          : [pname(b1), pname(b2)].filter(Boolean).join(' / ');
+
+        const aScore = parseInt(m.aScore) || 0;
+        const bScore = parseInt(m.bScore) || 0;
+        const _scored = (aScore + bScore) > 0;
+        const winner  = _scored
+          ? (aScore > bScore ? teamA : bScore > aScore ? teamB : '') : '';
+
+        const dm = (m.time || '').match(/(\d{4})[\/\-](\d{2})[\/\-](\d{2})/);
+        const date = dm ? `${dm[1]}-${dm[2]}-${dm[3]}` : '';
+
+        const eventName = ntcpaVenueName + (m.court ? ` Court ${m.court}` : '');
+
+        return {
+          court:          m.court || 0,
+          displayEvent:   ntcpaVenueName,
+          event:          eventName,
+          date,
+          type:           isSingles ? 'singles' : 'doubles',
+          scoreType,
+          playerA1:       pname(a1), playerA1DuprId: a1.duprId || '',
+          playerA2:       isSingles ? '' : pname(a2),
+          playerA2DuprId: isSingles ? '' : (a2.duprId || ''),
+          playerB1:       pname(b1), playerB1DuprId: b1.duprId || '',
+          playerB2:       isSingles ? '' : pname(b2),
+          playerB2DuprId: isSingles ? '' : (b2.duprId || ''),
+          teamA, teamB,
+          games:    { 1: { a: aScore, b: bScore } },
+          numGames: 1,
+          winner,
+          _scored
+        };
+      });
+  }
+
+  // ── 初始化 Firebase ────────────────────────────────────────
+  try {
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    badgeConnecting();
+
+    // 先讀取場地名稱
+    db.ref(`ntcpa/venues/${VENUE_ID}/config`).once('value', snap => {
+      const cfg = snap.val();
+      if (cfg && cfg.name) ntcpaVenueName = cfg.name;
+    });
+
+    // 即時監聽比賽資料
+    db.ref(`ntcpa/venues/${VENUE_ID}/data`).on('value',
+      snap => {
+        const data = snap.val();
+        if (!data) { badgeOffline(); return; }
+        const converted = ntcpaToScheduleMatches(data);
+        scheduleMatches = converted;
+        viewMatches     = converted;
+        saveSchedule();
+        updateHomeBadges();
+        if (document.getElementById('tab-view')?.classList.contains('active') ||
+            document.querySelector('#page-view.active')) {
+          renderViewTab();
+        }
+        badgeOnline(converted.length);
+        // 更新提示文字
+        const hint = document.getElementById('no-schedule-text');
+        if (hint) hint.textContent = `已連線 ${ntcpaVenueName}，即時同步中`;
+      },
+      err => {
+        console.warn('Firebase sync error:', err);
+        badgeOffline();
+      }
+    );
+
+    // 連線狀態監測
+    db.ref('.info/connected').on('value', snap => {
+      if (!snap.val()) badgeOffline();
+    });
+
+  } catch(e) {
+    console.warn('Firebase init failed:', e);
+  }
+})();
 </script>
 </body>
 </html>
