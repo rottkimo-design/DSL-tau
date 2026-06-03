@@ -1051,7 +1051,7 @@ function renderMatchItem(m, i) {
     }).join('');
     scoreHtml = `<div class="mi-score"><div class="mi-score-pills">${pills}</div></div>`;
   } else {
-    scoreHtml = `<div class="mi-score" style="color:var(--muted);font-size:11px">點擊輸入</div>`;
+    scoreHtml = '';
   }
 
   const winnerA = m._scored && m.winner===m.teamA;
