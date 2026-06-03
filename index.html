@@ -433,9 +433,27 @@
     border-radius:18px;background:#fff;cursor:pointer;
     transition:all .2s;text-align:center;
   }
+  .qs-team-btn{position:relative;overflow:visible;}
   .qs-team-btn:active{transform:scale(.96);}
   .qs-team-btn.side-a{border-color:var(--orange);background:#fef9f0;}
   .qs-team-btn.side-b{border-color:var(--blue);background:#eaf4fb;}
+  .qs-winner-badge{
+    position:absolute;top:-18px;left:50%;transform:translateX(-50%) scale(0);
+    background:linear-gradient(135deg,#f90,#ff5500);color:#fff;
+    font-size:13px;font-weight:900;letter-spacing:1px;
+    padding:4px 14px;border-radius:99px;white-space:nowrap;
+    pointer-events:none;opacity:0;
+    transition:opacity .15s,transform .15s;
+  }
+  .qs-team-btn.side-b .qs-winner-badge{background:linear-gradient(135deg,#2196f3,#0d47a1);}
+  .qs-team-btn:hover .qs-winner-badge{
+    opacity:1;transform:translateX(-50%) scale(1);
+    animation:winner-bounce .5s ease infinite alternate;
+  }
+  @keyframes winner-bounce{
+    from{transform:translateX(-50%) scale(1) translateY(0);}
+    to{transform:translateX(-50%) scale(1.12) translateY(-4px);}
+  }
   .qs-tside{font-size:11px;font-weight:700;text-transform:uppercase;
     letter-spacing:.5px;margin-bottom:8px;color:var(--muted);}
   .qs-tname{font-size:15px;font-weight:800;line-height:1.45;word-break:break-word;}
@@ -666,11 +684,13 @@
         <div class="qs-pick-title" id="qs-pick-title">請點選勝隊 WINNER</div>
         <div class="qs-teams">
           <div class="qs-team-btn side-a" onclick="qsPickWinner('a')">
+            <div class="qs-winner-badge">WINNER 🏆</div>
             <div class="qs-tside">🟠 A 隊</div>
             <div class="qs-tname" id="qs-name-a">—</div>
             <div class="qs-tid" id="qs-id-a"></div>
           </div>
           <div class="qs-team-btn side-b" onclick="qsPickWinner('b')">
+            <div class="qs-winner-badge">WINNER 🏆</div>
             <div class="qs-tside">🔵 B 隊</div>
             <div class="qs-tname" id="qs-name-b">—</div>
             <div class="qs-tid" id="qs-id-b"></div>
