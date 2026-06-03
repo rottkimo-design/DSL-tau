@@ -20,6 +20,10 @@
     min-height:100vh;display:flex;flex-direction:column;
     align-items:center;padding-bottom:60px;
   }
+  /* app-root: transparent wrapper in normal mode */
+  #app-root{
+    width:100%;display:flex;flex-direction:column;align-items:center;
+  }
 
   /* ── Top bar ── */
   .top-header{
@@ -492,56 +496,60 @@
   }
   #phone-toggle-btn.active{background:var(--blue);color:#fff;}
 
-  /* Phone frame mode */
-  body.phone-mode{
-    background:#1c1c2e;
-    align-items:center;
-    padding:0;
+  /* Notch pill (inside #app-root, first child) */
+  #phone-notch{
+    position:sticky;top:0;z-index:300;
+    height:36px;background:#111;
+    display:flex;align-items:flex-end;justify-content:center;
+    padding-bottom:6px;
   }
+  #phone-notch::after{
+    content:'';
+    width:100px;height:14px;
+    background:#222;border-radius:99px;
+    box-shadow:inset 0 0 0 1px #333;
+  }
+
+  /* Phone mode: dark bg, #app-root becomes the phone screen */
+  body.phone-mode{
+    background:#111;
+    align-items:center;
+    padding:32px 0 80px;
+    min-height:100vh;
+  }
+  body.phone-mode #app-root{
+    width:390px;
+    max-width:390px;
+    height:844px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    border-radius:48px;
+    scrollbar-width:none;
+    background:#f5f7fa;
+    /* Phone shell: shadow layers = bezel + side buttons illusion */
+    box-shadow:
+      0 0 0 10px #1a1a1a,
+      0 0 0 12px #2a2a2a,
+      0 0 0 14px #111,
+      0 30px 80px rgba(0,0,0,.8);
+    flex-shrink:0;
+  }
+  body.phone-mode #app-root::-webkit-scrollbar{display:none;}
+  body.phone-mode #phone-notch{display:flex;}
+  /* header sticky inside the scrollable app-root */
   body.phone-mode .top-header{
-    max-width:390px !important;
-    padding-top:50px; /* space for notch */
+    max-width:390px;
+    position:sticky;top:0;
   }
   body.phone-mode .page{
-    max-width:390px !important;
-  }
-  /* Phone frame ring */
-  body.phone-mode::before{
-    content:'';
-    position:fixed;
-    top:0;left:50%;
-    transform:translateX(-50%);
-    width:418px;
-    height:100%;
-    min-height:100vh;
-    border:14px solid #111;
-    border-top:40px solid #111;
-    border-bottom:50px solid #111;
-    pointer-events:none;
-    z-index:500;
-    border-radius:50px;
-    box-shadow:
-      inset 0 0 0 2px #2a2a2a,
-      0 0 0 1px #0a0a0a,
-      0 20px 60px rgba(0,0,0,.6);
-  }
-  /* Notch / camera pill */
-  body.phone-mode::after{
-    content:'';
-    position:fixed;
-    top:14px;left:50%;
-    transform:translateX(-50%);
-    width:100px;height:14px;
-    background:#111;
-    border-radius:99px;
-    z-index:600;
-    pointer-events:none;
-    box-shadow:inset 0 0 0 1px #222;
+    max-width:390px;
   }
 </style>
 </head>
 <body>
 
+<div id="app-root">
+<div id="phone-notch" style="display:none"></div>
 <div class="top-header">
   <h1>🏓 MCVS 分數登記</h1>
   <p>選手快速登記系統</p>
@@ -917,6 +925,8 @@
   </div>
 </div>
 
+</div><!-- #app-root -->
+
 <div class="toast" id="toast"></div>
 <button id="phone-toggle-btn" onclick="togglePhone()" title="切換手機/電腦顯示模式">📱 手機模式</button>
 
@@ -1128,6 +1138,8 @@ function togglePhone(){
   const btn = document.getElementById('phone-toggle-btn');
   btn.textContent = on ? '💻 電腦模式' : '📱 手機模式';
   btn.classList.toggle('active', on);
+  // scroll app-root to top when entering phone mode
+  if(on) document.getElementById('app-root').scrollTop = 0;
 }
 
 function qsReset(){
