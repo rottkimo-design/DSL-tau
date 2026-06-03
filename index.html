@@ -2034,6 +2034,15 @@ restoreSchedule();
         viewMatches     = converted;
         saveSchedule();
         updateHomeBadges();
+
+        // 若正在查看某個場地的場次列表 → 即時重繪（NTCPA 鎖定/更新分數後立刻反映）
+        const courtListSec = document.getElementById('sec-court-list');
+        if (courtListSec && courtListSec.classList.contains('active') && st.court) {
+          const courtMatches = converted.filter(m => m.court === st.court);
+          showCourtList(st.court, courtMatches);
+        }
+
+        // 若在查看頁 → 重繪
         if (document.getElementById('tab-view')?.classList.contains('active') ||
             document.querySelector('#page-view.active')) {
           renderViewTab();
