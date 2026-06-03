@@ -639,14 +639,6 @@
   <div class="sec active" id="sec-home">
     <div class="home-top">
       <div class="home-title">選擇場地</div>
-      <div style="display:flex;gap:6px">
-        <button class="import-btn" id="reassign-btn" onclick="openCourtModal()" style="display:none;border-color:var(--orange);color:var(--orange)">⚙ 重新分配</button>
-        <button class="import-btn" id="clear-btn" onclick="clearSchedule()" style="display:none;border-color:var(--red);color:var(--red)">🗑 清除</button>
-        <button class="import-btn" onclick="document.getElementById('schedule-file-input').click()">
-          ⬆ 載入賽程
-        </button>
-      </div>
-      <input type="file" id="schedule-file-input" accept=".csv" style="display:none" onchange="loadSchedule(event)">
     </div>
     <div class="court-grid">
       <div class="court-tile" data-court="1" onclick="selectCourtTile(1)">
@@ -676,26 +668,7 @@
     </div>
     <div class="no-schedule-hint" id="no-schedule-hint">
       <div class="icon">📂</div>
-      <p id="no-schedule-text">正在連線即時賽程資料…<br>（或點擊右上角「載入賽程」手動匯入 CSV）</p>
-    </div>
-  </div>
-
-  <!-- ── SEC A2: Court assign ── -->
-  <div class="sec" id="sec-assign">
-    <div class="modal-box">
-      <div class="modal-title">⚙️ 設定場地分配</div>
-      <div class="modal-sub" id="modal-sub" style="color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.6"></div>
-      <div class="field-label" style="margin-bottom:8px">分幾個場地？</div>
-      <div class="court-count-row">
-        <button class="cc-btn" data-n="1" onclick="selectCourtCount(1)">1</button>
-        <button class="cc-btn" data-n="2" onclick="selectCourtCount(2)">2</button>
-        <button class="cc-btn" data-n="3" onclick="selectCourtCount(3)">3</button>
-        <button class="cc-btn selected" data-n="4" onclick="selectCourtCount(4)">4</button>
-      </div>
-      <div class="field-label" style="margin-bottom:8px">分配預覽</div>
-      <div class="assign-preview" id="assign-preview"></div>
-      <button class="btn btn-primary" onclick="confirmCourtAssign()" style="margin-top:4px">✅ 確認分配</button>
-      <button class="btn btn-secondary" onclick="showSec('home')">取消</button>
+      <p id="no-schedule-text">正在連線即時賽程資料…</p>
     </div>
   </div>
 
@@ -1604,105 +1577,10 @@ function copyResult(){
 /* ═══════════════════════════════════════════
    SCHEDULE CSV LOADING (for home page badges)
 ═══════════════════════════════════════════ */
-function loadSchedule(e){
-  const file=e.target.files[0];if(!file)return;
-  e.target.value='';
-  const reader=new FileReader();
-  reader.onload=function(ev){
-    try{
-      scheduleMatches=parseCSV(ev.target.result);
-      viewMatches=scheduleMatches;
-
-      // Check if any match has court info
-      const hasCourt=scheduleMatches.some(m=>m.court>0);
-      if(!hasCourt && scheduleMatches.length>0){
-        // No court info → show assignment modal
-        openCourtModal();
-      }else{
-        updateHomeBadges();
-        saveSchedule();
-        showToast(`✅ 載入 ${scheduleMatches.length} 場賽程`);
-      }
-    }catch(err){showToast('CSV 格式有誤');console.error(err);}
-  };
-  reader.readAsText(file,'UTF-8');
-}
-
-/* ── Court assign modal ── */
-let _pendingCourtCount = 4;
-
-function openCourtModal(){
-  const n = scheduleMatches.length;
-  document.getElementById('modal-sub').innerHTML =
-    `載入了 <strong>${n} 場</strong>比賽，但 CSV 中未包含場地資訊。<br>請選擇要分配幾個場地：`;
-  _pendingCourtCount = n <= 10 ? 2 : 4;
-  document.querySelectorAll('.cc-btn').forEach(b=>{
-    b.classList.toggle('selected', parseInt(b.dataset.n)===_pendingCourtCount);
-  });
-  updateAssignPreview(_pendingCourtCount);
-  showSec('assign');
-}
-
-function selectCourtCount(n){
-  _pendingCourtCount=n;
-  document.querySelectorAll('.cc-btn').forEach(b=>{
-    b.classList.toggle('selected', parseInt(b.dataset.n)===n);
-  });
-  updateAssignPreview(n);
-}
-
-function updateAssignPreview(numCourts){
-  const total=scheduleMatches.length;
-  const base=Math.floor(total/numCourts);
-  const extra=total%numCourts;
-  const colors=['#e74c3c','#3498db','#2ecc71','#e67e22'];
-  let html='';
-  let start=1;
-  for(let c=1;c<=numCourts;c++){
-    const cnt=base+(c<=extra?1:0);
-    const end=start+cnt-1;
-    html+=`<div class="assign-row">
-      <span class="assign-court" style="color:${colors[c-1]||'#888'}">場地 ${c}</span>
-      <span class="assign-count">${cnt} 場</span>
-      <span class="assign-range">第 ${start}～${end} 場</span>
-    </div>`;
-    start+=cnt;
-  }
-  document.getElementById('assign-preview').innerHTML=html;
-}
-
-function confirmCourtAssign(){
-  const numCourts=_pendingCourtCount;
-  const total=scheduleMatches.length;
-  const base=Math.floor(total/numCourts);
-  const extra=total%numCourts;
-  let start=0;
-  for(let c=1;c<=numCourts;c++){
-    const cnt=base+(c<=extra?1:0);
-    for(let i=start;i<start+cnt;i++) scheduleMatches[i].court=c;
-    start+=cnt;
-  }
-  viewMatches=scheduleMatches;
-  showSec('home');
-  updateHomeBadges();
-  saveSchedule();
-  showToast(`✅ 已分配到 ${numCourts} 個場地`);
-}
-
-function clearSchedule(){
-  if(!confirm('確定要清除所有賽程資料？'))return;
-  scheduleMatches=[];viewMatches=[];
-  localStorage.removeItem('mcvs_schedule');
-  updateHomeBadges();
-  showSec('home');
-  showToast('賽程已清除');
-}
 
 function updateHomeBadges(){
   const hint=document.getElementById('no-schedule-hint');
   const hasData=scheduleMatches.length>0;
-  document.getElementById('reassign-btn').style.display=hasData?'':'none';
-  document.getElementById('clear-btn').style.display=hasData?'':'none';
   let hasAny=false;
   [1,2,3,4].forEach(n=>{
     const matches=scheduleMatches.filter(m=>m.court===n);
