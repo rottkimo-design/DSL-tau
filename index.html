@@ -283,7 +283,7 @@
     text-align:center;padding:11px;margin-bottom:11px;
   }
   .winner-label{font-size:11px;color:var(--muted);margin-bottom:3px;}
-  .winner-name{font-size:19px;font-weight:800;}
+  .winner-name{font-size:36px;font-weight:800;}
 
   /* success */
   .success-icon{font-size:60px;text-align:center;margin:8px 0;}
@@ -403,7 +403,7 @@
     background:var(--green-dark);color:#fff;font-size:12px;font-weight:800;
     padding:3px 12px;border-radius:99px;
   }
-  .qs-progress{font-size:12px;color:var(--muted);}
+  .qs-progress{font-size:24px;font-weight:700;color:var(--text);}
   .qs-close{
     width:32px;height:32px;border-radius:50%;border:2px solid #e0e0e0;
     background:#fff;font-size:18px;cursor:pointer;
@@ -413,7 +413,7 @@
 
   /* Game mini-log (shows previous games) */
   .qs-gamelog{
-    display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;min-height:24px;
+    display:none; /* 移除：不再顯示局數 log */
   }
   .qs-gamelog-pill{
     font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;
@@ -478,7 +478,7 @@
   /* Confirm */
   .qs-game-row{
     display:flex;justify-content:space-between;align-items:center;
-    padding:9px 0;font-size:14px;
+    padding:12px 0;font-size:24px;
   }
   .qs-game-row+.qs-game-row{border-top:1px solid #eee;}
   .qs-game-num{color:var(--muted);font-weight:600;}
