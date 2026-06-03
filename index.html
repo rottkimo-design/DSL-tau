@@ -2002,8 +2002,29 @@ restoreSchedule();
         // 若正在查看某個場地的場次列表 → 即時重繪（NTCPA 鎖定/更新分數後立刻反映）
         const courtListSec = document.getElementById('sec-court-list');
         if (courtListSec && courtListSec.classList.contains('active') && st.court) {
+          // 記錄重繪前已完成場次 ID，用來找「剛輸入分數的那場」
+          const prevScoredIds = new Set(
+            scheduleMatches.filter(m => m._scored && m._ntcpaId != null).map(m => m._ntcpaId)
+          );
+          const savedScroll = window.scrollY || window.pageYOffset;
           const courtMatches = converted.filter(m => m.court === st.court);
           showCourtList(st.court, courtMatches);
+
+          requestAnimationFrame(() => {
+            // 找出剛被標為完成的那場索引
+            const newIdx = courtMatches.findIndex(
+              m => m._scored && m._ntcpaId != null && !prevScoredIds.has(m._ntcpaId)
+            );
+            if (newIdx >= 0) {
+              const cards = document.querySelectorAll('#cl-match-list .match-item');
+              if (cards[newIdx]) {
+                cards[newIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            } else {
+              // 無新完成場次（如分數修改）→ 還原原本捲動位置
+              window.scrollTo(0, savedScroll);
+            }
+          });
         }
 
         // 若在查看頁 → 重繪
