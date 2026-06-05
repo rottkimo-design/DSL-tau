@@ -2354,7 +2354,7 @@ async function saveQrImage() {
     cv.width=CW*SC; cv.height=H*SC;
     const ctx=cv.getContext('2d');
     ctx.scale(SC,SC);
-    ctx.fillStyle='#f5f7fa'; ctx.fillRect(0,0,CW,H);
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,CW,H);
 
     /* 標題 */
     ctx.fillStyle='#333'; ctx.font='bold 16px sans-serif'; ctx.textAlign='center';
