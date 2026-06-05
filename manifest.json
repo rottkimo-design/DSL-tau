@@ -1,0 +1,15 @@
+{
+  "name": "MCVS 分數登記",
+  "short_name": "MCVS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#2ecc71",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/emoji/256/ping-pong.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    }
+  ]
+}

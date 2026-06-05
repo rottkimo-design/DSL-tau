@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MCVS">
 <title>MCVS 分數登記</title>
 <style>
   :root {
@@ -1998,7 +2002,7 @@ const _COURT_COLORS = {1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22'};
 function renderQrGrid() {
   const grid = document.getElementById('qr-grid');
   grid.innerHTML = [1,2,3,4].map(n => {
-    const url = `${_APP_BASE}?court=${n}`;
+    const url = `${_APP_BASE}/c${n}`;
     const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=10&ecc=H&data=${encodeURIComponent(url)}`;
     const courtChar = {1:'木', 2:'柵', 3:'高', 4:'工'}[n] || '';
 
@@ -2033,6 +2037,9 @@ function renderQrGrid() {
    URL 參數：?court=N 自動進入場地
 ═══════════════════════════════════════ */
 const _urlCourt = (function(){
+  // 支援 /c1 路徑 與 ?court=1 參數兩種方式
+  const pathMatch = window.location.pathname.match(/\/c([1-4])$/);
+  if (pathMatch) return parseInt(pathMatch[1]);
   const p = new URLSearchParams(window.location.search).get('court');
   const n = parseInt(p);
   return (n >= 1 && n <= 4) ? n : null;
