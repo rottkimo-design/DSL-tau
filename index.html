@@ -2027,10 +2027,10 @@ function printSchedule(courtFilter) {
       const no = `第${_CN[i]||String(i+1)}場`;
       const type = m.type==='doubles'?'雙打':'單打';
       const a = m.type==='doubles'
-        ? `${esc(stripPrefix(m.playerA1))}<br>${esc(stripPrefix(m.playerA2))}`
+        ? `${esc(stripPrefix(m.playerA1))} / ${esc(stripPrefix(m.playerA2))}`
         : esc(stripPrefix(m.playerA1));
       const b = m.type==='doubles'
-        ? `${esc(stripPrefix(m.playerB1))}<br>${esc(stripPrefix(m.playerB2))}`
+        ? `${esc(stripPrefix(m.playerB1))} / ${esc(stripPrefix(m.playerB2))}`
         : esc(stripPrefix(m.playerB1));
       html += `<tr>
         <td style="text-align:center">${no}</td>
