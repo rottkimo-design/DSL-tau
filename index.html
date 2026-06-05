@@ -2390,7 +2390,11 @@ async function saveQrImage() {
       ctx.fillStyle=color; ctx.font='bold 15px sans-serif'; ctx.textAlign='left';
       ctx.fillText(`場地 ${n}`, x0+12, y+BORDER+22);
 
-      const qrX=x0+CARD_PAD, qrY=y+BORDER+TITLE_H;
+      /* 計算置中偏移：QR(150) + gap(12) + 名稱欄(220) = 382；左右等距 */
+      const NAME_W=220, INNER_GAP=12;
+      const INNER_W=QR+INNER_GAP+NAME_W;
+      const leftOff=Math.floor((cw-INNER_W)/2);
+      const qrX=x0+leftOff, qrY=y+BORDER+TITLE_H;
 
       /* QR Code 圖片 */
       if(qrImg){
@@ -2408,7 +2412,7 @@ async function saveQrImage() {
       }
 
       /* 選手名稱 */
-      const px=qrX+QR+10, pw=cw-CARD_PAD-QR-18;
+      const px=qrX+QR+INNER_GAP, pw=NAME_W;
       players.forEach((p,i)=>{
         const py=qrY+i*PH+PH*0.72;
         ctx.fillStyle='#333'; ctx.font='14px sans-serif'; ctx.textAlign='left';
