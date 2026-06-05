@@ -731,7 +731,7 @@
       <div class="cl-title">場地 QR Code</div>
     </div>
     <div class="qr-grid" id="qr-grid"></div>
-    <button id="qr-save-btn" class="btn btn-blue" style="max-width:360px;margin-top:4px" onclick="saveQrImage()">💾 另存圖檔（A4 列印）</button>
+    <button id="qr-save-btn" class="btn btn-blue" style="max-width:360px;margin-top:4px" onclick="saveQrImage()">📸 全螢幕預覽（截圖列印）</button>
     <button class="qr-back-btn" onclick="showSec('home')">← 返回</button>
   </div>
 
@@ -2094,66 +2094,30 @@ function _handleUrlCourt() {
 }
 </script>
 
-<!-- ══════════ QR CODE 另存圖檔 ══════════ -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- ══════════ QR CODE 全螢幕預覽（截圖儲存）══════════ -->
 <script>
-async function saveQrImage() {
-  const btn = document.getElementById('qr-save-btn');
-  btn.textContent = '⏳ 產生中…';
-  btn.disabled = true;
-
-  const grid = document.getElementById('qr-grid');
-  grid.style.maxWidth = 'none';
-  grid.style.width = '680px';
-
-  await new Promise(r => setTimeout(r, 600));
-
-  try {
-    showToast('🖼️ 圖片生成中，請稍候…');
-    const canvas = await html2canvas(grid, {
-      scale: 3, useCORS: true, backgroundColor: '#f5f7fa', logging: false,
-    });
-    const dataUrl = canvas.toDataURL('image/png');
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    if (isIOS) {
-      // iOS：長按浮層
-      _showImgOverlay(dataUrl);
-    } else {
-      // Android / 桌面：直接下載
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = 'MCVS_QRCode_全場地.png';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      showToast('✅ 圖片已下載，請至下載資料夾查看');
-    }
-  } catch(e) {
-    console.error(e);
-    showToast('❌ 圖片產生失敗，請重試');
-  } finally {
-    grid.style.maxWidth = '';
-    grid.style.width = '';
-    btn.textContent = '💾 另存圖檔（A4 列印）';
-    btn.disabled = false;
-  }
-}
-
-function _showImgOverlay(dataUrl) {
+function saveQrImage() {
+  // 建立全螢幕白底預覽，使用者直接截圖即可
   const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px;overflow-y:auto;';
-  const hint = document.createElement('div');
-  hint.style.cssText = 'color:#fff;font-size:15px;font-weight:700;text-align:center;line-height:1.6;';
-  hint.textContent = '📲 長按圖片 → 儲存到相簿';
-  const img = document.createElement('img');
-  img.src = dataUrl;
-  img.style.cssText = 'max-width:100%;max-height:70vh;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.5);';
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕ 關閉';
-  closeBtn.style.cssText = 'padding:11px 28px;border-radius:99px;border:2px solid #fff;background:transparent;color:#fff;font-size:15px;font-weight:700;cursor:pointer;';
-  closeBtn.onclick = () => document.body.removeChild(overlay);
-  overlay.append(hint, img, closeBtn);
+  overlay.id = 'qr-print-overlay';
+  overlay.style.cssText = [
+    'position:fixed;inset:0;background:#fff;z-index:99999;',
+    'overflow-y:auto;-webkit-overflow-scrolling:touch;',
+    'display:flex;flex-direction:column;align-items:center;',
+    'padding:16px 16px 40px;'
+  ].join('');
+
+  const topBar = document.createElement('div');
+  topBar.style.cssText = 'width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;position:sticky;top:0;background:#fff;padding:8px 0;z-index:1;';
+  topBar.innerHTML = `
+    <span style="font-size:13px;color:#888;">📸 截圖後儲存，或列印此頁面</span>
+    <button onclick="document.getElementById('qr-print-overlay').remove()"
+      style="padding:8px 20px;border-radius:99px;border:2px solid #e0e0e0;background:#fff;font-size:14px;font-weight:700;cursor:pointer;">✕ 關閉</button>`;
+
+  const content = document.getElementById('qr-grid').cloneNode(true);
+  content.style.cssText = 'max-width:none;width:100%;';
+
+  overlay.append(topBar, content);
   document.body.appendChild(overlay);
 }
 </script>
