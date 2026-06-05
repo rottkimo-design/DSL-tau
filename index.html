@@ -2019,7 +2019,7 @@ const _COURT_COLORS = {1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22'};
 function renderQrGrid() {
   const grid = document.getElementById('qr-grid');
   grid.innerHTML = [1,2,3,4].map(n => {
-    const url = `${_APP_BASE}/c${n}`;
+    const url = `${window.location.origin}/c${n}`;
     const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=10&ecc=H&data=${encodeURIComponent(url)}`;
     const courtChar = {1:'木', 2:'柵', 3:'高', 4:'工'}[n] || '';
 
