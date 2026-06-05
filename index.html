@@ -2326,7 +2326,7 @@ async function saveQrImage() {
     /* ── 版面常數 ── */
     const SC=2, CW=480, MG=12, GAP=10;
     const BORDER=5, TITLE_H=32, CARD_PAD=12;
-    const QR=150, PH=22;
+    const QR=180, PH=22;
     const COURT_COLORS={1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22'};
     const COURT_CHARS={1:'木',2:'柵',3:'高',4:'工'};
 
@@ -2390,8 +2390,8 @@ async function saveQrImage() {
       ctx.fillStyle=color; ctx.font='bold 15px sans-serif'; ctx.textAlign='left';
       ctx.fillText(`場地 ${n}`, x0+12, y+BORDER+22);
 
-      /* 整體置中：QR(150) + gap(12) + 名稱(110) = 272；中間插入 */
-      const INNER_GAP=12, NAME_W=110;
+      /* 整體置中：QR(180) + gap(12) + 名稱(90) = 282；中間插入 */
+      const INNER_GAP=12, NAME_W=90;
       const TOTAL_INNER_W=QR+INNER_GAP+NAME_W;
       const leftOff=Math.floor((cw-TOTAL_INNER_W)/2);
       const qrX=x0+leftOff, qrY=y+BORDER+TITLE_H;
@@ -2400,11 +2400,11 @@ async function saveQrImage() {
       if(qrImg){
         ctx.drawImage(qrImg, qrX, qrY, QR, QR);
         /* 中央文字疊層 */
-        const os=48;
+        const os=Math.floor(QR*0.32);
         ctx.fillStyle='rgba(255,255,255,0.92)';
         ctx.fillRect(qrX+QR/2-os/2, qrY+QR/2-os/2, os, os);
-        ctx.fillStyle='#555'; ctx.font='bold 34px sans-serif'; ctx.textAlign='center';
-        ctx.fillText(char, qrX+QR/2, qrY+QR/2+12);
+        ctx.fillStyle='#555'; ctx.font=`bold ${Math.floor(QR*0.23)}px sans-serif`; ctx.textAlign='center';
+        ctx.fillText(char, qrX+QR/2, qrY+QR/2+Math.floor(QR*0.07));
       } else {
         ctx.fillStyle='#eee'; ctx.fillRect(qrX,qrY,QR,QR);
         ctx.fillStyle='#aaa'; ctx.font='12px sans-serif'; ctx.textAlign='center';
