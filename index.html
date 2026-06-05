@@ -2063,6 +2063,13 @@ const _urlCourt = (function(){
 })();
 let _urlCourtHandled = false;
 
+// /qr 路徑：直接進 QR Code 頁面
+if (window.location.pathname === '/qr') {
+  document.addEventListener('DOMContentLoaded', () => showSec('qr'));
+  // Firebase 資料到後重繪 QR Grid（選手名稱）
+  window._autoQr = true;
+}
+
 // 掃碼進入：立刻切換到載入畫面，避免閃現首頁四場地
 if (_urlCourt) {
   document.querySelectorAll('#page-record .sec').forEach(s => s.classList.remove('active'));
@@ -2370,6 +2377,7 @@ async function saveQrImage() {
         }
         badgeOnline(converted.length);
         _handleUrlCourt();
+        if (window._autoQr) renderQrGrid();
         // 更新提示文字
         const hint = document.getElementById('no-schedule-text');
         if (hint) hint.textContent = `已連線 ${ntcpaVenueName}，即時同步中`;
