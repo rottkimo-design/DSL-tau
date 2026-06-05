@@ -1995,9 +1995,13 @@ let _urlCourtHandled = false;
 
 function _handleUrlCourt() {
   if (!_urlCourt || _urlCourtHandled) return;
-  const matches = scheduleMatches.filter(m => m.court === _urlCourt);
-  if (!matches.length) return;   // 資料還沒到，等下一次 Firebase 更新
+  if (!scheduleMatches.length) return;  // Firebase 尚未載入，繼續等待
   _urlCourtHandled = true;
+  const matches = scheduleMatches.filter(m => m.court === _urlCourt);
+  if (!matches.length) {
+    window.showDslToast(`⚠️ 場地 ${_urlCourt} 目前無任何賽事`, 5000);
+    return;
+  }
   st.court = _urlCourt;
   showCourtList(_urlCourt, matches);
 }
