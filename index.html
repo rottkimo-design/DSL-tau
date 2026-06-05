@@ -653,6 +653,23 @@
   display: block; opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* ── 列印 ── */
+#print-area { display: none; }
+@media print {
+  body > * { display: none !important; }
+  #print-area { display: block !important; font-family: sans-serif; }
+  @page { size: A4 portrait; margin: 10mm; }
+  .print-court-block { page-break-inside: avoid; margin-bottom: 14px; }
+  .print-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .print-table th, .print-table td { border: 1px solid #bbb; padding: 5px 6px; }
+  .print-table th { background: #f0f0f0; text-align: center; }
+  .print-court-title {
+    font-size: 13px; font-weight: 800; padding: 5px 10px;
+    border-left: 5px solid #333; background: #f5f5f5;
+    margin-bottom: 0;
+  }
+}
 </style>
 </head>
 <body>
@@ -681,7 +698,10 @@
   <div class="sec active" id="sec-home">
     <div class="home-top">
       <div class="home-title">選擇場地</div>
-      <button class="import-btn" onclick="showSec('qr')">📋 QR Code</button>
+      <div style="display:flex;gap:6px">
+        <button class="import-btn" onclick="printSchedule(null)">🖨️ 列印全部</button>
+        <button class="import-btn" onclick="showSec('qr')">📋 QR Code</button>
+      </div>
     </div>
     <div class="court-grid">
       <div class="court-tile" data-court="1" onclick="selectCourtTile(1)">
@@ -741,6 +761,7 @@
       <button class="back-btn" onclick="showSec('home')">←</button>
       <div class="cl-title" id="cl-title">場地 1</div>
       <div class="cl-sub" id="cl-sub"></div>
+      <button class="import-btn" onclick="printSchedule(st.court)" style="flex-shrink:0">🖨️</button>
     </div>
     <div id="cl-match-list"></div>
   </div>
@@ -1018,6 +1039,7 @@
 </div><!-- #app-root -->
 
 <div class="toast" id="toast"></div>
+<div id="print-area"></div>
 <button id="phone-toggle-btn" onclick="togglePhone()" title="切換手機/電腦顯示模式">📱 手機模式</button>
 
 <script>
@@ -1968,6 +1990,62 @@ function renderViewTab() {
         </tr>`).join('')}
       </tbody>
     </table>`;
+}
+
+/* ── 列印場次表 ── */
+const _COURT_CLR = {1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22'};
+
+function printSchedule(courtFilter) {
+  const courts = courtFilter ? [courtFilter] : [1,2,3,4];
+  const date = new Date().toLocaleDateString('zh-TW');
+
+  let html = `
+    <div style="text-align:center;margin-bottom:10px">
+      <div style="font-size:18px;font-weight:900">🏓 MCVS 比賽場次表</div>
+      <div style="font-size:11px;color:#666;margin-top:2px">${date}</div>
+    </div>`;
+
+  courts.forEach(n => {
+    const matches = scheduleMatches.filter(m => m.court === n);
+    if (!matches.length) return;
+
+    html += `<div class="print-court-block">
+      <div class="print-court-title" style="border-left-color:${_COURT_CLR[n]}">
+        場地 ${n}　共 ${matches.length} 場
+      </div>
+      <table class="print-table">
+        <thead><tr>
+          <th style="width:10%">場次</th>
+          <th style="width:7%">類型</th>
+          <th style="width:33%;text-align:left">🟠 隊伍 A</th>
+          <th style="width:33%;text-align:left">🔵 隊伍 B</th>
+          <th style="width:17%">比分記錄</th>
+        </tr></thead>
+        <tbody>`;
+
+    matches.forEach((m, i) => {
+      const no = `第${_CN[i]||String(i+1)}場`;
+      const type = m.type==='doubles'?'雙打':'單打';
+      const a = m.type==='doubles'
+        ? `${esc(stripPrefix(m.playerA1))}<br>${esc(stripPrefix(m.playerA2))}`
+        : esc(stripPrefix(m.playerA1));
+      const b = m.type==='doubles'
+        ? `${esc(stripPrefix(m.playerB1))}<br>${esc(stripPrefix(m.playerB2))}`
+        : esc(stripPrefix(m.playerB1));
+      html += `<tr>
+        <td style="text-align:center">${no}</td>
+        <td style="text-align:center">${type}</td>
+        <td>${a}</td>
+        <td>${b}</td>
+        <td style="text-align:center;color:#bbb;letter-spacing:2px">__:__</td>
+      </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+  });
+
+  document.getElementById('print-area').innerHTML = html;
+  window.print();
 }
 
 /* ── Toast ── */
