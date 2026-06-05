@@ -593,6 +593,28 @@
 .rk-diff-neg { color: var(--red); font-weight: 700; }
 .rk-no-data { text-align:center;padding:40px 20px;color:var(--muted);font-size:14px; }
 
+/* ── QR Code 頁面 ── */
+.qr-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px;
+}
+.qr-card {
+  background: #fff; border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 12px; display: flex; flex-direction: column;
+  align-items: center; gap: 10px;
+}
+.qr-card[data-court="1"] { border-top: 5px solid var(--c1); }
+.qr-card[data-court="2"] { border-top: 5px solid var(--c2); }
+.qr-card[data-court="3"] { border-top: 5px solid var(--c3); }
+.qr-card[data-court="4"] { border-top: 5px solid var(--c4); }
+.qr-label { font-size: 15px; font-weight: 800; }
+.qr-img { width: 140px; height: 140px; border-radius: 8px; }
+.qr-url { font-size: 10px; color: var(--muted); word-break: break-all; text-align: center; }
+.qr-back-btn {
+  width: 100%; padding: 13px; border: none; border-radius: 12px;
+  background: var(--gray); color: var(--text); font-size: 15px; font-weight: 700;
+  cursor: pointer; margin-top: 6px;
+}
+
 /* ── Score notification toast ── */
 #dsl-notify {
   display: none;
@@ -639,6 +661,7 @@
   <div class="sec active" id="sec-home">
     <div class="home-top">
       <div class="home-title">選擇場地</div>
+      <button class="import-btn" onclick="showSec('qr')">📋 QR Code</button>
     </div>
     <div class="court-grid">
       <div class="court-tile" data-court="1" onclick="selectCourtTile(1)">
@@ -670,6 +693,16 @@
       <div class="icon">📂</div>
       <p id="no-schedule-text">正在連線即時賽程資料…</p>
     </div>
+  </div>
+
+  <!-- ── SEC QR: QR Code 展示 ── -->
+  <div class="sec" id="sec-qr">
+    <div class="cl-header">
+      <button class="back-btn" onclick="showSec('home')">←</button>
+      <div class="cl-title">場地 QR Code</div>
+    </div>
+    <div class="qr-grid" id="qr-grid"></div>
+    <button class="qr-back-btn" onclick="showSec('home')">← 返回</button>
   </div>
 
   <!-- ── SEC B: Court match list ── -->
@@ -992,6 +1025,7 @@ function switchTab(tab) {
 function showSec(id) {
   document.querySelectorAll('#page-record .sec').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-'+id).classList.add('active');
+  if (id === 'qr') renderQrGrid();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -1924,6 +1958,49 @@ function restoreSchedule(){
 
 // 頁面載入時自動還原
 restoreSchedule();
+
+/* ═══════════════════════════════════════
+   QR CODE 展示
+═══════════════════════════════════════ */
+const _APP_BASE = (function(){
+  const u = window.location;
+  return u.origin + u.pathname.replace(/\/+$/, '');
+})();
+
+const _COURT_COLORS = {1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22'};
+
+function renderQrGrid() {
+  const grid = document.getElementById('qr-grid');
+  grid.innerHTML = [1,2,3,4].map(n => {
+    const url = `${_APP_BASE}?court=${n}`;
+    const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent(url)}`;
+    return `
+      <div class="qr-card" data-court="${n}">
+        <div class="qr-label" style="color:${_COURT_COLORS[n]}">場地 ${n}</div>
+        <img class="qr-img" src="${qrSrc}" alt="場地 ${n} QR Code">
+        <div class="qr-url">${url}</div>
+      </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════
+   URL 參數：?court=N 自動進入場地
+═══════════════════════════════════════ */
+const _urlCourt = (function(){
+  const p = new URLSearchParams(window.location.search).get('court');
+  const n = parseInt(p);
+  return (n >= 1 && n <= 4) ? n : null;
+})();
+let _urlCourtHandled = false;
+
+function _handleUrlCourt() {
+  if (!_urlCourt || _urlCourtHandled) return;
+  const matches = scheduleMatches.filter(m => m.court === _urlCourt);
+  if (!matches.length) return;   // 資料還沒到，等下一次 Firebase 更新
+  _urlCourtHandled = true;
+  st.court = _urlCourt;
+  showCourtList(_urlCourt, matches);
+}
 </script>
 
 <!-- ══════════ FIREBASE REALTIME SYNC ══════════ -->
@@ -2150,6 +2227,7 @@ restoreSchedule();
           renderViewTab();
         }
         badgeOnline(converted.length);
+        _handleUrlCourt();
         // 更新提示文字
         const hint = document.getElementById('no-schedule-text');
         if (hint) hint.textContent = `已連線 ${ntcpaVenueName}，即時同步中`;
