@@ -2009,7 +2009,7 @@ function printSchedule(courtFilter) {
     const matches = scheduleMatches.filter(m => m.court === n);
     if (!matches.length) return;
 
-    html += `<div class="print-court-block">
+    html += `<div class="print-court-block" style="margin-bottom:28px">
       <div class="print-court-title" style="border-left-color:${_COURT_CLR[n]}">
         場地 ${n}　共 ${matches.length} 場
       </div>
