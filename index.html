@@ -699,7 +699,7 @@
     <div class="home-top">
       <div class="home-title">選擇場地</div>
       <div style="display:flex;gap:6px">
-        <button class="import-btn" onclick="printSchedule(null)">🖨️ 列印全部</button>
+        <button class="import-btn" onclick="printSchedule(null)">📸 場次表</button>
         <button class="import-btn" onclick="showSec('qr')">📋 QR Code</button>
       </div>
     </div>
@@ -2044,8 +2044,21 @@ function printSchedule(courtFilter) {
     html += `</tbody></table></div>`;
   });
 
-  document.getElementById('print-area').innerHTML = html;
-  setTimeout(() => window.print(), 300);
+  // 全螢幕白底預覽，截圖儲存
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:99999;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 60px;font-family:sans-serif;font-size:12px;';
+
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:sticky;top:0;background:#fff;padding:8px 0 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;margin-bottom:10px;z-index:1;';
+  bar.innerHTML = `<span style="font-size:12px;color:#888">📸 截圖後儲存或傳給印表機</span>
+    <button onclick="this.closest('[style]').remove()"
+      style="padding:6px 16px;border-radius:99px;border:1.5px solid #ccc;background:#fff;font-size:13px;font-weight:700;cursor:pointer;">✕ 關閉</button>`;
+
+  const content = document.createElement('div');
+  content.innerHTML = html;
+
+  overlay.append(bar, content);
+  document.body.appendChild(overlay);
 }
 
 /* ── Toast ── */
