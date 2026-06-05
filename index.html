@@ -2390,10 +2390,10 @@ async function saveQrImage() {
       ctx.fillStyle=color; ctx.font='bold 15px sans-serif'; ctx.textAlign='left';
       ctx.fillText(`場地 ${n}`, x0+12, y+BORDER+22);
 
-      /* 計算置中偏移：QR(150) + gap(12) + 名稱欄(220) = 382；左右等距 */
-      const NAME_W=220, INNER_GAP=12;
-      const INNER_W=QR+INNER_GAP+NAME_W;
-      const leftOff=Math.floor((cw-INNER_W)/2);
+      /* 左右固定等距 60px，名稱欄填滿剩餘空間 */
+      const SIDE_PAD=60, INNER_GAP=12;
+      const leftOff=SIDE_PAD;
+      const NAME_W=cw-SIDE_PAD*2-QR-INNER_GAP;
       const qrX=x0+leftOff, qrY=y+BORDER+TITLE_H;
 
       /* QR Code 圖片 */
