@@ -707,6 +707,7 @@
       <div class="cl-title">場地 QR Code</div>
     </div>
     <div class="qr-grid" id="qr-grid"></div>
+    <button id="qr-save-btn" class="btn btn-blue" style="max-width:360px;margin-top:4px" onclick="saveQrImage()">💾 另存圖檔（A4 列印）</button>
     <button class="qr-back-btn" onclick="showSec('home')">← 返回</button>
   </div>
 
@@ -2030,6 +2031,44 @@ function _handleUrlCourt() {
   showCourtList(_urlCourt, matches);
   // 掃碼進入：隱藏返回主頁按鈕
   document.querySelector('#sec-court-list .back-btn').style.display = 'none';
+}
+</script>
+
+<!-- ══════════ QR CODE 另存圖檔 ══════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+async function saveQrImage() {
+  const btn = document.getElementById('qr-save-btn');
+  btn.textContent = '⏳ 產生中…';
+  btn.disabled = true;
+
+  const grid = document.getElementById('qr-grid');
+  // 暫時拿掉 max-width、放大至適合 A4 寬度
+  grid.style.maxWidth = 'none';
+  grid.style.width = '680px';
+
+  // 等 QR Code 圖片重新載入完成
+  await new Promise(r => setTimeout(r, 600));
+
+  try {
+    const canvas = await html2canvas(grid, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: '#f5f7fa',
+      logging: false,
+    });
+    const link = document.createElement('a');
+    link.download = 'MCVS_QRCode_全場地.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch(e) {
+    showToast('❌ 圖片產生失敗，請重試');
+  } finally {
+    grid.style.maxWidth = '';
+    grid.style.width = '';
+    btn.textContent = '💾 另存圖檔（A4 列印）';
+    btn.disabled = false;
+  }
 }
 </script>
 
