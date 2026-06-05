@@ -595,19 +595,23 @@
 
 /* ── QR Code 頁面 ── */
 .qr-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px;
+  display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 4px;
 }
 .qr-card {
   background: #fff; border-radius: var(--radius); box-shadow: var(--shadow);
-  padding: 18px 12px; display: flex; flex-direction: column;
-  align-items: center; gap: 10px;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
 }
 .qr-card[data-court="1"] { border-top: 5px solid var(--c1); }
 .qr-card[data-court="2"] { border-top: 5px solid var(--c2); }
 .qr-card[data-court="3"] { border-top: 5px solid var(--c3); }
 .qr-card[data-court="4"] { border-top: 5px solid var(--c4); }
 .qr-label { font-size: 15px; font-weight: 800; }
-.qr-img { width: 140px; height: 140px; border-radius: 8px; }
+.qr-inner { display: flex; align-items: center; gap: 14px; }
+.qr-img { width: 120px; height: 120px; border-radius: 8px; flex-shrink: 0; }
+.qr-players { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.qr-player { font-size: 13px; color: var(--text); padding: 4px 0; border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qr-player:last-child { border-bottom: none; }
+.qr-no-players { font-size: 12px; color: var(--muted); }
 .qr-url { display: none; }
 .qr-back-btn {
   width: 100%; padding: 13px; border: none; border-radius: 12px;
@@ -1974,11 +1978,32 @@ function renderQrGrid() {
   grid.innerHTML = [1,2,3,4].map(n => {
     const url = `${_APP_BASE}?court=${n}`;
     const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent(url)}`;
+
+    // 收集該場地所有唯一選手名稱
+    const players = [];
+    const seen = new Set();
+    scheduleMatches.filter(m => m.court === n).forEach(m => {
+      [m.playerA1, m.playerA2, m.playerB1, m.playerB2].forEach(p => {
+        if (p && !seen.has(p)) { seen.add(p); players.push(p); }
+      });
+    });
+
+    const playerListHtml = players.length
+      ? players.map(p => `<div class="qr-player">${p}</div>`).join('')
+      : `<div class="qr-no-players">尚無選手資料</div>`;
+
+    const qrImg   = `<img class="qr-img" src="${qrSrc}" alt="場地 ${n} QR Code">`;
+    const pList   = `<div class="qr-players">${playerListHtml}</div>`;
+
+    // 場地 1,3：選手在左；場地 2,4：選手在右
+    const inner = (n === 1 || n === 3)
+      ? `${pList}${qrImg}`
+      : `${qrImg}${pList}`;
+
     return `
       <div class="qr-card" data-court="${n}">
         <div class="qr-label" style="color:${_COURT_COLORS[n]}">場地 ${n}</div>
-        <img class="qr-img" src="${qrSrc}" alt="場地 ${n} QR Code">
-        <div class="qr-url">${url}</div>
+        <div class="qr-inner">${inner}</div>
       </div>`;
   }).join('');
 }
