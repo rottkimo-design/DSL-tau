@@ -661,12 +661,12 @@
   #print-area { display: block !important; font-family: sans-serif; }
   @page { size: A4 portrait; margin: 10mm; }
   .print-court-block { page-break-inside: avoid; margin-bottom: 14px; }
-  .print-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  .print-table th, .print-table td { border: 1px solid #bbb; padding: 5px 6px; }
+  .print-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .print-table th, .print-table td { border: 1px solid #bbb; padding: 10px 8px; }
   .print-table th { background: #f0f0f0; text-align: center; }
   .print-court-title {
-    font-size: 13px; font-weight: 800; padding: 5px 10px;
-    border-left: 5px solid #333; background: #f5f5f5;
+    font-size: 16px; font-weight: 800; padding: 8px 12px;
+    border-left: 6px solid #333; background: #f5f5f5;
     margin-bottom: 0;
   }
 }
@@ -2046,7 +2046,7 @@ function printSchedule(courtFilter) {
 
   // 全螢幕白底預覽，截圖儲存
   const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:99999;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 60px;font-family:sans-serif;font-size:12px;';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:99999;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 60px;font-family:sans-serif;font-size:15px;';
 
   const bar = document.createElement('div');
   bar.style.cssText = 'position:sticky;top:0;background:#fff;padding:8px 0 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;margin-bottom:10px;z-index:1;';
