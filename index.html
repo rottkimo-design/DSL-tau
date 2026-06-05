@@ -700,6 +700,15 @@
     </div>
   </div>
 
+  <!-- ── SEC LOADING: QR 掃碼等待畫面 ── -->
+  <div class="sec" id="sec-loading">
+    <div style="text-align:center;padding:80px 20px 40px;">
+      <div style="font-size:52px;margin-bottom:18px">🏓</div>
+      <div id="sec-loading-text" style="font-size:20px;font-weight:800;color:var(--text)">載入中…</div>
+      <div style="color:var(--muted);font-size:13px;margin-top:8px">正在連線即時賽程資料</div>
+    </div>
+  </div>
+
   <!-- ── SEC QR: QR Code 展示 ── -->
   <div class="sec" id="sec-qr">
     <div class="cl-header">
@@ -2017,6 +2026,14 @@ const _urlCourt = (function(){
   return (n >= 1 && n <= 4) ? n : null;
 })();
 let _urlCourtHandled = false;
+
+// 掃碼進入：立刻切換到載入畫面，避免閃現首頁四場地
+if (_urlCourt) {
+  document.querySelectorAll('#page-record .sec').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-loading').classList.add('active');
+  const t = document.getElementById('sec-loading-text');
+  if (t) t.textContent = `場地 ${_urlCourt} 載入中…`;
+}
 
 function _handleUrlCourt() {
   if (!_urlCourt || _urlCourtHandled) return;
