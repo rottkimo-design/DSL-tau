@@ -608,7 +608,7 @@
 .qr-card[data-court="4"] { border-top: 5px solid var(--c4); }
 .qr-label { font-size: 15px; font-weight: 800; }
 .qr-inner { display: flex; align-items: center; gap: 8px; justify-content: center; }
-.qr-img { width: 120px; height: 120px; border-radius: 8px; flex-shrink: 0; }
+.qr-img { width: 240px; height: 240px; border-radius: 8px; flex-shrink: 0; }
 .qr-players { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .qr-player { font-size: 13px; color: var(--text); padding: 4px 0; border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .qr-player:last-child { border-bottom: none; }
@@ -1988,7 +1988,7 @@ function renderQrGrid() {
   const grid = document.getElementById('qr-grid');
   grid.innerHTML = [1,2,3,4].map(n => {
     const url = `${_APP_BASE}?court=${n}`;
-    const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent(url)}`;
+    const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=10&data=${encodeURIComponent(url)}`;
 
     // 收集該場地所有唯一選手名稱
     const players = [];
