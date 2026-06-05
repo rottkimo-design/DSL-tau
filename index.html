@@ -2114,27 +2114,75 @@ function printSchedule(courtFilter) {
 
   /* ── 輸出 ── */
   const dataUrl=cv.toDataURL('image/png');
-  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
-  if(isIOS){
-    const ov=document.createElement('div');
-    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;-webkit-user-select:none;user-select:none;';
-    const hint=document.createElement('div');
-    hint.style.cssText='color:#fff;font-size:14px;font-weight:700;text-align:center;pointer-events:none;';
-    hint.textContent='📲 長按圖片 → 儲存到相簿';
-    const img=document.createElement('img');
-    img.src=dataUrl; img.style.cssText='max-width:100%;border-radius:10px;-webkit-touch-callout:default;touch-callout:default;';
-    const btn=document.createElement('button');
-    btn.textContent='✕ 關閉';
-    btn.style.cssText='padding:10px 28px;border-radius:99px;border:2px solid #fff;background:transparent;color:#fff;font-size:14px;font-weight:700;cursor:pointer;';
-    btn.onclick=()=>document.body.removeChild(ov);
-    ov.append(hint,img,btn);
-    document.body.appendChild(ov);
-  } else {
-    const a=document.createElement('a');
-    a.href=dataUrl; a.download='MCVS_場次表.png';
+  _showSaveOverlay(dataUrl, 'MCVS_場次表.png');
+}
+
+/* ── 儲存圖片浮層（iOS Web Share / Android 下載）── */
+function _showSaveOverlay(dataUrl, filename) {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  if (!isIOS) {
+    // Android / 桌面：直接下載
+    const a = document.createElement('a');
+    a.href = dataUrl; a.download = filename;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     showToast('✅ 圖片已下載');
+    return;
   }
+
+  // iOS：鎖定底層 scroll，顯示浮層
+  const scrollY = window.scrollY;
+  document.body.style.cssText += ';overflow:hidden;position:fixed;top:-' + scrollY + 'px;width:100%;';
+
+  const close = () => {
+    if (document.body.contains(ov)) document.body.removeChild(ov);
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo(0, scrollY);
+  };
+
+  const ov = document.createElement('div');
+  ov.style.cssText = [
+    'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:99999;',
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;',
+    'padding:20px;gap:16px;',
+    '-webkit-user-select:none;user-select:none;',
+    'overscroll-behavior:contain;touch-action:pan-y;',
+  ].join('');
+
+  // 圖片預覽（pointer-events:none 防止 Live Text 干擾）
+  const preview = document.createElement('img');
+  preview.src = dataUrl;
+  preview.style.cssText = 'max-width:100%;max-height:55vh;border-radius:10px;pointer-events:none;display:block;';
+
+  // 儲存按鈕（直接觸發 Web Share API — 屬於使用者手勢）
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = '📥 儲存到相簿';
+  saveBtn.style.cssText = 'width:220px;padding:14px;border-radius:14px;border:none;background:#2ecc71;color:#fff;font-size:16px;font-weight:800;cursor:pointer;';
+  saveBtn.onclick = async () => {
+    try {
+      const blob = await fetch(dataUrl).then(r => r.blob());
+      const file = new File([blob], filename, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: filename });
+      } else {
+        showToast('請長按圖片儲存');
+        preview.style.pointerEvents = '';
+      }
+    } catch(e) {
+      if (e.name !== 'AbortError') showToast('❌ 儲存失敗，請重試');
+    }
+  };
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕ 關閉';
+  closeBtn.style.cssText = 'padding:10px 28px;border-radius:99px;border:2px solid rgba(255,255,255,.6);background:transparent;color:#fff;font-size:14px;font-weight:700;cursor:pointer;';
+  closeBtn.onclick = close;
+
+  ov.append(preview, saveBtn, closeBtn);
+  document.body.appendChild(ov);
 }
 
 /* ── Toast ── */
@@ -2379,28 +2427,7 @@ async function saveQrImage() {
     });
 
     const dataUrl = cv.toDataURL('image/png');
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
-
-    if(isIOS){
-      const ov=document.createElement('div');
-      ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;';
-      const hint=document.createElement('div');
-      hint.style.cssText='color:#fff;font-size:14px;font-weight:700;text-align:center;';
-      hint.textContent='📲 長按圖片 → 儲存到相簿';
-      const img=document.createElement('img');
-      img.src=dataUrl; img.style.cssText='max-width:100%;border-radius:10px;';
-      const closeBtn=document.createElement('button');
-      closeBtn.textContent='✕ 關閉';
-      closeBtn.style.cssText='padding:10px 28px;border-radius:99px;border:2px solid #fff;background:transparent;color:#fff;font-size:14px;font-weight:700;cursor:pointer;';
-      closeBtn.onclick=()=>document.body.removeChild(ov);
-      ov.append(hint,img,closeBtn);
-      document.body.appendChild(ov);
-    } else {
-      const a=document.createElement('a');
-      a.href=dataUrl; a.download='MCVS_QRCode_全場地.png';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      showToast('✅ 圖片已下載');
-    }
+    _showSaveOverlay(dataUrl, 'MCVS_QRCode_全場地.png');
   } catch(e) {
     console.error(e);
     showToast('❌ 圖片產生失敗，請重試');
