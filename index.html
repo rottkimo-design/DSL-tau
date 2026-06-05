@@ -1452,13 +1452,18 @@ function doSubmitScore({ sm, gamesObj, aScore, bScore, aWins, bWins, m, payload 
     if(fbIdx !== undefined){
       window._fbDb
         .ref(`ntcpa/venues/${window._ntcpaVenueId}/data`)
-        .update({ [`matches/${fbIdx}/aScore`]: aScore, [`matches/${fbIdx}/bScore`]: bScore, _sid: 'DSL_' + Date.now() })
+        .update({
+          [`matches/${fbIdx}/aScore`]: aScore,
+          [`matches/${fbIdx}/bScore`]: bScore,
+          [`matches/${fbIdx}/locked`]: true,
+          _sid: 'DSL_' + Date.now()
+        })
         .catch(err => console.warn('Firebase write-back failed:', err));
 
       const winnerTeam = aWins > bWins ? m.teamA : m.teamB;
       const notifyMsg = `🏆 Court ${st.court} · 第 ${sm.num||'?'} 場\n${m.teamA} ${aScore} : ${bScore} ${m.teamB}\n🥇 勝隊：${winnerTeam}`;
       if (window._notifyRef) {
-        window._notifyRef.push({ msg: notifyMsg, ts: Date.now(), did: window._dslDeviceId }).catch(()=>{});
+        window._notifyRef.push({ action: 'lockScore', matchId: sm._ntcpaId, court: st.court, msg: notifyMsg, ts: Date.now(), did: window._dslDeviceId }).catch(()=>{});
       }
       window.showDslToast(notifyMsg, 5000);
     }
@@ -1677,13 +1682,18 @@ function submitScore(){
         const bScore = st.g[1] ? (st.g[1].b || 0) : 0;
         window._fbDb
           .ref(`ntcpa/venues/${window._ntcpaVenueId}/data`)
-          .update({ [`matches/${fbIdx}/aScore`]: aScore, [`matches/${fbIdx}/bScore`]: bScore, _sid: 'DSL_' + Date.now() })
+          .update({
+            [`matches/${fbIdx}/aScore`]: aScore,
+            [`matches/${fbIdx}/bScore`]: bScore,
+            [`matches/${fbIdx}/locked`]: true,
+            _sid: 'DSL_' + Date.now()
+          })
           .catch(err => console.warn('Firebase write-back failed:', err));
-        // ── 廣播通知到 NTCPA ──
+        // ── 廣播通知到 NTCPA（含鎖定）──
         const winnerTeam = wA > wB ? teamA : teamB;
         const notifyMsg = `🏆 Court ${st.court} · 第 ${(st.prefillIdx||0)+1} 場\n${teamA} ${aScore} : ${bScore} ${teamB}\n🥇 勝隊：${winnerTeam}`;
         if (window._notifyRef) {
-          window._notifyRef.push({ msg: notifyMsg, ts: Date.now(), did: window._dslDeviceId }).catch(()=>{});
+          window._notifyRef.push({ action: 'lockScore', matchId: sm._ntcpaId, court: st.court, msg: notifyMsg, ts: Date.now(), did: window._dslDeviceId }).catch(()=>{});
         }
         window.showDslToast(notifyMsg, 5000);
       }
