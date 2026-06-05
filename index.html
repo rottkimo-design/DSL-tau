@@ -2020,9 +2020,9 @@ function printSchedule(courtFilter) {
   c.fillStyle='#f5f7fa'; c.fillRect(0,0,CW,H);
 
   /* ── 標題 ── */
-  c.fillStyle='#1b4332'; c.font='bold 22px sans-serif'; c.textAlign='center';
-  c.fillText('MCVS 比賽場次表', CW/2, 32);
-  c.font='13px sans-serif'; c.fillStyle='#888';
+  c.fillStyle='#1b4332'; c.font='bold 24px sans-serif'; c.textAlign='center';
+  c.fillText('木柵高工 DUPR 場次表', CW/2, 32);
+  c.font='bold 16px sans-serif'; c.fillStyle='#333';
   c.fillText(new Date().toLocaleDateString('zh-TW'), CW/2, 54);
 
   /* ── 圓角矩形 ── */
@@ -2073,35 +2073,38 @@ function printSchedule(courtFilter) {
       c.fillStyle='#555'; c.font='bold 14px sans-serif'; c.textAlign='center';
       c.fillText(`#${String(i+1).padStart(2,'0')}`, MG+NUM_W/2, y+RH/2+5);
 
-      const x0 = MG+NUM_W+6;
-      const isD = m.type==='doubles';
-      const a1=stripPrefix(m.playerA1), a2=isD?stripPrefix(m.playerA2):'';
-      const b1=stripPrefix(m.playerB1), b2=isD?stripPrefix(m.playerB2):'';
+      /* 新布局：場次 | A隊 | 比分 | B隊 */
+      const sideW = Math.floor((CW-MG*2-NUM_W-SCORE_W)/2); // A隊和B隊各佔寬度
+      const a1=stripPrefix(m.playerA1), a2=m.type==='doubles'?stripPrefix(m.playerA2):'';
+      const b1=stripPrefix(m.playerB1), b2=m.type==='doubles'?stripPrefix(m.playerB2):'';
 
-      if(isD){
-        const pw=(PLAYER_AREA/2-6)/2-3; // 4 badges
-        drawBadge(a1, x0,            y, pw, true);
-        drawBadge(a2, x0+pw+4,       y, pw, true);
-        /* VS */
-        c.fillStyle='#aaa'; c.font='bold 13px sans-serif'; c.textAlign='center';
-        c.fillText('VS', x0+pw*2+8+VS_W/2, y+RH/2+5);
-        drawBadge(b1, x0+pw*2+8+VS_W+2, y, pw, false);
-        drawBadge(b2, x0+pw*3+12+VS_W+2, y, pw, false);
+      /* A隊（左側） */
+      const axStart = MG+NUM_W+6;
+      if(m.type==='doubles'){
+        const pw = (sideW-8)/2;
+        drawBadge(a1, axStart, y, pw, true);
+        drawBadge(a2, axStart+pw+4, y, pw, true);
       } else {
-        const pw=(PLAYER_AREA-VS_W)/2-4;
-        drawBadge(a1, x0, y, pw, true);
-        c.fillStyle='#aaa'; c.font='bold 13px sans-serif'; c.textAlign='center';
-        c.fillText('VS', x0+pw+4+VS_W/2, y+RH/2+5);
-        drawBadge(b1, x0+pw+4+VS_W+4, y, pw, false);
+        drawBadge(a1, axStart, y, sideW-4, true);
       }
 
-      /* 比分欄 */
-      const sx=CW-MG-SCORE_W+4;
+      /* 比分欄（中間） */
+      const sx = MG+NUM_W+sideW+6;
       roundRect(sx, y+12, SCORE_W-12, RH-24, 6, '#fff');
       c.strokeStyle='#ddd'; c.lineWidth=1.5;
       c.stroke();
       c.fillStyle='#ccc'; c.font='15px sans-serif'; c.textAlign='center';
       c.fillText('___:___', sx+(SCORE_W-12)/2, y+RH/2+5.5);
+
+      /* B隊（右側） */
+      const bxStart = sx+SCORE_W+6;
+      if(m.type==='doubles'){
+        const pw = (sideW-8)/2;
+        drawBadge(b1, bxStart, y, pw, false);
+        drawBadge(b2, bxStart+pw+4, y, pw, false);
+      } else {
+        drawBadge(b1, bxStart, y, sideW-4, false);
+      }
 
       /* 分隔線 */
       c.strokeStyle='#e8e8e8'; c.lineWidth=1;
