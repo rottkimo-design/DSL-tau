@@ -2190,13 +2190,17 @@ function renderQrGrid() {
     const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=10&ecc=H&data=${encodeURIComponent(url)}`;
     const courtChar = {1:'木', 2:'柵', 3:'高', 4:'工'}[n] || '';
 
-    // 收集該場地所有唯一選手名稱
+    // 收集該場地所有唯一選手名稱，依前綴編號排序（A11→A18, B21→B28…）
     const players = [];
     const seen = new Set();
     scheduleMatches.filter(m => m.court === n).forEach(m => {
       [m.playerA1, m.playerA2, m.playerB1, m.playerB2].forEach(p => {
         if (p && !seen.has(p)) { seen.add(p); players.push(p); }
       });
+    });
+    players.sort((a, b) => {
+      const key = s => { const m = s.match(/^([A-Za-z])(\d+)/); return m ? m[1].charCodeAt(0)*1000+parseInt(m[2]) : 9999; };
+      return key(a) - key(b);
     });
 
     const playerListHtml = players.length
