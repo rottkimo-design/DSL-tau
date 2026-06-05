@@ -751,7 +751,7 @@
       <div class="cl-title">場地 QR Code</div>
     </div>
     <div class="qr-grid" id="qr-grid"></div>
-    <button id="qr-save-btn" class="btn btn-blue" style="max-width:360px;margin-top:4px" onclick="saveQrImage()">📸 全螢幕預覽（截圖列印）</button>
+    <button id="qr-save-btn" class="btn btn-blue" style="max-width:360px;margin-top:4px" onclick="saveQrImage()">💾 存成圖片</button>
     <button class="qr-back-btn" onclick="showSec('home')">← 返回</button>
   </div>
 
@@ -2265,31 +2265,149 @@ function _handleUrlCourt() {
 }
 </script>
 
-<!-- ══════════ QR CODE 全螢幕預覽（截圖儲存）══════════ -->
+<!-- ══════════ QR CODE 存成圖片（Canvas 2D）══════════ -->
 <script>
-function saveQrImage() {
-  // 建立全螢幕白底預覽，使用者直接截圖即可
-  const overlay = document.createElement('div');
-  overlay.id = 'qr-print-overlay';
-  overlay.style.cssText = [
-    'position:fixed;inset:0;background:#fff;z-index:99999;',
-    'overflow-y:auto;-webkit-overflow-scrolling:touch;',
-    'display:flex;flex-direction:column;align-items:center;',
-    'padding:16px 16px 40px;'
-  ].join('');
+async function saveQrImage() {
+  const btn = document.getElementById('qr-save-btn');
+  btn.textContent = '⏳ 產生中…';
+  btn.disabled = true;
 
-  const topBar = document.createElement('div');
-  topBar.style.cssText = 'width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;position:sticky;top:0;background:#fff;padding:8px 0;z-index:1;';
-  topBar.innerHTML = `
-    <span style="font-size:13px;color:#888;">📸 截圖後儲存，或列印此頁面</span>
-    <button onclick="document.getElementById('qr-print-overlay').remove()"
-      style="padding:8px 20px;border-radius:99px;border:2px solid #e0e0e0;background:#fff;font-size:14px;font-weight:700;cursor:pointer;">✕ 關閉</button>`;
+  try {
+    showToast('🖼️ 生成中，請稍候…');
 
-  const content = document.getElementById('qr-grid').cloneNode(true);
-  content.style.cssText = 'max-width:none;width:100%;';
+    /* ── 版面常數 ── */
+    const SC=2, CW=480, MG=12, GAP=10;
+    const BORDER=5, TITLE_H=32, CARD_PAD=12;
+    const QR=150, PH=22;
+    const COURT_COLORS={1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22'};
+    const COURT_CHARS={1:'木',2:'柵',3:'高',4:'工'};
 
-  overlay.append(topBar, content);
-  document.body.appendChild(overlay);
+    /* ── 收集各場地選手（依編號排序）── */
+    const sortKey = s => { const m=s.match(/^([A-Za-z])(\d+)/); return m?m[1].charCodeAt(0)*1000+parseInt(m[2]):9999; };
+    const courtData = [1,2,3,4].map(n => {
+      const seen=new Set(), players=[];
+      scheduleMatches.filter(m=>m.court===n).forEach(m=>{
+        [m.playerA1,m.playerA2,m.playerB1,m.playerB2].forEach(p=>{
+          if(p&&!seen.has(p)){seen.add(p);players.push(p);}
+        });
+      });
+      players.sort((a,b)=>sortKey(a)-sortKey(b));
+      return {n, players};
+    });
+
+    /* ── 計算總高度 ── */
+    let H = 46;
+    courtData.forEach(({players})=>{
+      H += BORDER + TITLE_H + Math.max(QR, players.length*PH) + CARD_PAD*2 + GAP;
+    });
+    H += MG;
+
+    const cv = document.createElement('canvas');
+    cv.width=CW*SC; cv.height=H*SC;
+    const ctx=cv.getContext('2d');
+    ctx.scale(SC,SC);
+    ctx.fillStyle='#f5f7fa'; ctx.fillRect(0,0,CW,H);
+
+    /* 標題 */
+    ctx.fillStyle='#333'; ctx.font='bold 16px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('MCVS 分數登記 — 場地 QR Code', CW/2, 28);
+
+    /* ── 載入 QR Code 圖片（CORS）── */
+    const loadImg = src => new Promise(res=>{
+      const img=new Image(); img.crossOrigin='anonymous';
+      img.onload=()=>res(img); img.onerror=()=>res(null);
+      img.src=src;
+    });
+    const qrImgs = await Promise.all(courtData.map(({n})=>
+      loadImg(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&ecc=H&data=${encodeURIComponent(window.location.origin+'/c'+n)}`)
+    ));
+
+    let y = 46;
+
+    courtData.forEach(({n, players}, idx)=>{
+      const color=COURT_COLORS[n], char=COURT_CHARS[n];
+      const qrImg=qrImgs[idx];
+      const cardH = BORDER + TITLE_H + Math.max(QR, players.length*PH) + CARD_PAD*2;
+      const x0=MG, cw=CW-MG*2;
+
+      /* 卡片背景 */
+      ctx.fillStyle='#fff'; ctx.fillRect(x0,y,cw,cardH);
+      ctx.strokeStyle='#e8e8e8'; ctx.lineWidth=1;
+      ctx.strokeRect(x0+.5,y+.5,cw-1,cardH-1);
+
+      /* 頂部彩色條 */
+      ctx.fillStyle=color; ctx.fillRect(x0,y,cw,BORDER);
+
+      /* 場地標題 */
+      ctx.fillStyle=color; ctx.font='bold 15px sans-serif'; ctx.textAlign='left';
+      ctx.fillText(`場地 ${n}`, x0+12, y+BORDER+22);
+
+      const qrX=x0+CARD_PAD, qrY=y+BORDER+TITLE_H;
+
+      /* QR Code 圖片 */
+      if(qrImg){
+        ctx.drawImage(qrImg, qrX, qrY, QR, QR);
+        /* 中央文字疊層 */
+        const os=48;
+        ctx.fillStyle='rgba(255,255,255,0.92)';
+        ctx.fillRect(qrX+QR/2-os/2, qrY+QR/2-os/2, os, os);
+        ctx.fillStyle='#555'; ctx.font='bold 34px sans-serif'; ctx.textAlign='center';
+        ctx.fillText(char, qrX+QR/2, qrY+QR/2+12);
+      } else {
+        ctx.fillStyle='#eee'; ctx.fillRect(qrX,qrY,QR,QR);
+        ctx.fillStyle='#aaa'; ctx.font='12px sans-serif'; ctx.textAlign='center';
+        ctx.fillText('QR Code', qrX+QR/2, qrY+QR/2);
+      }
+
+      /* 選手名稱 */
+      const px=qrX+QR+10, pw=cw-CARD_PAD-QR-18;
+      players.forEach((p,i)=>{
+        const py=qrY+i*PH+PH*0.72;
+        ctx.fillStyle='#333'; ctx.font='14px sans-serif'; ctx.textAlign='left';
+        let s=p;
+        const maxW=pw-6;
+        while(ctx.measureText(s).width>maxW&&s.length>1) s=s.slice(0,-1);
+        if(s!==p) s=s.slice(0,-1)+'…';
+        ctx.fillText(s, px, py);
+        if(i<players.length-1){
+          ctx.strokeStyle='#f0f0f0'; ctx.lineWidth=1;
+          ctx.beginPath(); ctx.moveTo(px,py+PH*0.35); ctx.lineTo(px+pw,py+PH*0.35); ctx.stroke();
+        }
+      });
+
+      y += cardH + GAP;
+    });
+
+    const dataUrl = cv.toDataURL('image/png');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+
+    if(isIOS){
+      const ov=document.createElement('div');
+      ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;';
+      const hint=document.createElement('div');
+      hint.style.cssText='color:#fff;font-size:14px;font-weight:700;text-align:center;';
+      hint.textContent='📲 長按圖片 → 儲存到相簿';
+      const img=document.createElement('img');
+      img.src=dataUrl; img.style.cssText='max-width:100%;border-radius:10px;';
+      const closeBtn=document.createElement('button');
+      closeBtn.textContent='✕ 關閉';
+      closeBtn.style.cssText='padding:10px 28px;border-radius:99px;border:2px solid #fff;background:transparent;color:#fff;font-size:14px;font-weight:700;cursor:pointer;';
+      closeBtn.onclick=()=>document.body.removeChild(ov);
+      ov.append(hint,img,closeBtn);
+      document.body.appendChild(ov);
+    } else {
+      const a=document.createElement('a');
+      a.href=dataUrl; a.download='MCVS_QRCode_全場地.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      showToast('✅ 圖片已下載');
+    }
+  } catch(e) {
+    console.error(e);
+    showToast('❌ 圖片產生失敗，請重試');
+  } finally {
+    btn.textContent='💾 存成圖片';
+    btn.disabled=false;
+  }
 }
 </script>
 
