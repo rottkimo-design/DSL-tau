@@ -2004,6 +2004,8 @@ function _handleUrlCourt() {
   }
   st.court = _urlCourt;
   showCourtList(_urlCourt, matches);
+  // 掃碼進入：隱藏返回主頁按鈕
+  document.querySelector('#sec-court-list .back-btn').style.display = 'none';
 }
 </script>
 
@@ -2207,6 +2209,7 @@ function _handleUrlCourt() {
           const savedScroll = window.scrollY || window.pageYOffset;
           const courtMatches = converted.filter(m => m.court === st.court);
           showCourtList(st.court, courtMatches);
+          if (_urlCourtHandled) document.querySelector('#sec-court-list .back-btn').style.display = 'none';
 
           requestAnimationFrame(() => {
             // 找出剛被標為完成的那場索引
