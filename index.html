@@ -2045,7 +2045,7 @@ function printSchedule(courtFilter) {
   });
 
   document.getElementById('print-area').innerHTML = html;
-  window.print();
+  setTimeout(() => window.print(), 300);
 }
 
 /* ── Toast ── */
