@@ -2303,10 +2303,8 @@ async function saveQrImage() {
           window.showDslToast('🔒 此比賽已被 NTCPA 鎖定，已強制退回', 5000);
           backToCourtList();
         } else {
-          // 其他頁面 → 顯示通知並切到成績排名頁該場地
+          // 其他頁面 → 僅顯示通知，留在原畫面
           window.showDslToast(d.msg, 5000);
-          switchTab('view');
-          if (d.court) setRkCourt(String(d.court));
         }
       });
     });
