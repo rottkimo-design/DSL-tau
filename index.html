@@ -2109,53 +2109,28 @@ async function saveQrImage() {
   await new Promise(r => setTimeout(r, 600));
 
   try {
+    showToast('🖼️ 圖片生成中，請稍候…');
     const canvas = await html2canvas(grid, {
       scale: 3, useCORS: true, backgroundColor: '#f5f7fa', logging: false,
     });
-
-    // canvas → Blob → File
-    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-    const file = new File([blob], 'MCVS_QRCode_全場地.png', { type: 'image/png' });
-
-    // ① Web Share API（Android / iOS 15+ 原生分享）
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: 'MCVS QR Code 全場地' });
-        return;
-      } catch(e) {
-        if (e.name === 'AbortError') return; // 使用者取消，不做任何事
-      }
-    }
-
-    // ② 直接下載（Android Chrome / 桌面）
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    if (!isIOS) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'MCVS_QRCode_全場地.png';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      return;
-    }
-
-    // ③ iOS 長按浮層（最後降級）
     const dataUrl = canvas.toDataURL('image/png');
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px;overflow-y:auto;';
-    const hint = document.createElement('div');
-    hint.style.cssText = 'color:#fff;font-size:15px;font-weight:700;text-align:center;line-height:1.6;';
-    hint.textContent = '📲 長按圖片 → 儲存到相簿';
-    const img = document.createElement('img');
-    img.src = dataUrl;
-    img.style.cssText = 'max-width:100%;max-height:70vh;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.5);';
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕ 關閉';
-    closeBtn.style.cssText = 'padding:11px 28px;border-radius:99px;border:2px solid #fff;background:transparent;color:#fff;font-size:15px;font-weight:700;cursor:pointer;';
-    closeBtn.onclick = () => document.body.removeChild(overlay);
-    overlay.append(hint, img, closeBtn);
-    document.body.appendChild(overlay);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
+    if (isIOS) {
+      // iOS：長按浮層
+      _showImgOverlay(dataUrl);
+    } else {
+      // Android / 桌面：直接下載
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'MCVS_QRCode_全場地.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('✅ 圖片已下載，請至下載資料夾查看');
+    }
   } catch(e) {
+    console.error(e);
     showToast('❌ 圖片產生失敗，請重試');
   } finally {
     grid.style.maxWidth = '';
@@ -2163,6 +2138,23 @@ async function saveQrImage() {
     btn.textContent = '💾 另存圖檔（A4 列印）';
     btn.disabled = false;
   }
+}
+
+function _showImgOverlay(dataUrl) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px;overflow-y:auto;';
+  const hint = document.createElement('div');
+  hint.style.cssText = 'color:#fff;font-size:15px;font-weight:700;text-align:center;line-height:1.6;';
+  hint.textContent = '📲 長按圖片 → 儲存到相簿';
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  img.style.cssText = 'max-width:100%;max-height:70vh;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.5);';
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕ 關閉';
+  closeBtn.style.cssText = 'padding:11px 28px;border-radius:99px;border:2px solid #fff;background:transparent;color:#fff;font-size:15px;font-weight:700;cursor:pointer;';
+  closeBtn.onclick = () => document.body.removeChild(overlay);
+  overlay.append(hint, img, closeBtn);
+  document.body.appendChild(overlay);
 }
 </script>
 
