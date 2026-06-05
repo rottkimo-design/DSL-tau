@@ -1082,7 +1082,10 @@ function showCourtList(n, matches) {
   document.getElementById('cl-sub').textContent = `${scored}/${matches.length} 場完成`;
 
   const list = document.getElementById('cl-match-list');
-  list.innerHTML = matches.map((m, i) => renderMatchItem(m, i)).join('');
+  const visible = matches.filter(m => !m._scored && !m._locked);
+  list.innerHTML = visible.length
+    ? visible.map((m, i) => renderMatchItem(m, i)).join('')
+    : `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px">🎉 所有場次已完成</div>`;
   showSec('court-list');
 }
 
