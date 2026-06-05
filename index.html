@@ -2135,17 +2135,16 @@ function _showSaveOverlay(dataUrl, filename) {
     return;
   }
 
-  // 桌面版：只顯示預覽（無下載），點擊放大
+  // 桌面版：只顯示預覽（無下載），點擊放大，可捲動
   if (isDesktop) {
     const ov = document.createElement('div');
     ov.style.cssText = [
       'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;',
-      'display:flex;flex-direction:column;align-items:center;justify-content:center;',
-      'padding:20px;gap:16px;overflow:auto;',
+      'display:flex;flex-direction:column;align-items:center;padding:20px;gap:16px;',
     ].join('');
 
     const imgContainer = document.createElement('div');
-    imgContainer.style.cssText = 'display:flex;align-items:center;justify-content:center;flex:1;min-height:0;';
+    imgContainer.style.cssText = 'flex:1;width:100%;min-height:0;display:flex;align-items:center;justify-content:center;overflow:auto;';
 
     const img = document.createElement('img');
     img.src = dataUrl;
