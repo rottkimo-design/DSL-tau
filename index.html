@@ -1998,139 +1998,142 @@ const _COURT_CLR = {1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22'};
 function printSchedule(courtFilter) {
   const courts = courtFilter ? [courtFilter] : [1,2,3,4];
 
-  /* ── 版面參數 ── */
-  const SC   = 2;          // retina scale
-  const MG   = 24;         // margin
-  const COL  = [108,62,238,238,110]; // 場次/類型/隊A/隊B/比分
-  const TW   = COL.reduce((a,b)=>a+b,0);
-  const CW   = TW + MG*2;
-  const RH   = 58;         // row height
-  const THH  = 38;         // table header height
-  const CTH  = 46;         // court title height
-  const TITL = 72;         // top title area
-  const GAP  = 30;
+  /* ── 版面常數 ── */
+  const SC=2, CW=900, MG=16, RH=60, HDR=52, TITL=70, GAP=20;
+  const NUM_W=55, VS_W=44, SCORE_W=100;
+  const PLAYER_AREA = CW - MG*2 - NUM_W - VS_W - SCORE_W; // 空間給 4 個 badge
 
   /* ── 計算總高度 ── */
-  let totalH = TITL;
-  courts.forEach(n => {
-    const cnt = scheduleMatches.filter(m=>m.court===n).length;
-    if (cnt) totalH += CTH + THH + cnt*RH + GAP;
+  let H = TITL;
+  courts.forEach(n=>{
+    const cnt=scheduleMatches.filter(m=>m.court===n).length;
+    if(cnt) H += HDR + cnt*RH + GAP;
   });
-  totalH += MG;
+  H += MG;
 
-  const canvas = document.createElement('canvas');
-  canvas.width  = CW * SC;
-  canvas.height = totalH * SC;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(SC, SC);
+  const cv = document.createElement('canvas');
+  cv.width=CW*SC; cv.height=H*SC;
+  const c = cv.getContext('2d');
+  c.scale(SC,SC);
 
-  /* ── 白底 ── */
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, CW, totalH);
+  /* ── 背景 ── */
+  c.fillStyle='#f5f7fa'; c.fillRect(0,0,CW,H);
 
   /* ── 標題 ── */
-  ctx.fillStyle = '#1a1a1a';
-  ctx.font = 'bold 21px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('MCVS 比賽場次表', CW/2, 34);
-  ctx.font = '13px sans-serif';
-  ctx.fillStyle = '#999';
-  ctx.fillText(new Date().toLocaleDateString('zh-TW'), CW/2, 56);
+  c.fillStyle='#1b4332'; c.font='bold 22px sans-serif'; c.textAlign='center';
+  c.fillText('MCVS 比賽場次表', CW/2, 32);
+  c.font='13px sans-serif'; c.fillStyle='#888';
+  c.fillText(new Date().toLocaleDateString('zh-TW'), CW/2, 54);
 
-  /* ── 輔助：畫格子 ── */
-  const cell = (txt, x, y, w, h, opt={}) => {
-    if (opt.bg) { ctx.fillStyle=opt.bg; ctx.fillRect(x,y,w,h); }
-    ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
-    ctx.strokeRect(x+.5, y+.5, w-1, h-1);
-    ctx.fillStyle = opt.clr||'#222';
-    ctx.font = (opt.bold?'bold ':'')+`${opt.fs||16}px sans-serif`;
-    ctx.textAlign = opt.align||'center';
-    const tx = opt.align==='left' ? x+9 : x+w/2;
-    const ty = y + h/2 + (opt.fs||16)*0.36;
-    /* 截短過長文字 */
-    const maxW = w - (opt.align==='left'?18:8);
-    let s = txt;
-    while (ctx.measureText(s).width > maxW && s.length>1) s=s.slice(0,-1);
-    if (s!==txt) s=s.slice(0,-1)+'…';
-    ctx.fillText(s, tx, ty);
+  /* ── 圓角矩形 ── */
+  const roundRect = (x,y,w,h,r,fill)=>{
+    c.beginPath();
+    c.moveTo(x+r,y); c.lineTo(x+w-r,y);
+    c.arcTo(x+w,y,x+w,y+r,r); c.lineTo(x+w,y+h-r);
+    c.arcTo(x+w,y+h,x+w-r,y+h,r); c.lineTo(x+r,y+h);
+    c.arcTo(x,y+h,x,y+h-r,r); c.lineTo(x,y+r);
+    c.arcTo(x,y,x+r,y,r); c.closePath();
+    if(fill){c.fillStyle=fill;c.fill();}
   };
 
-  let y = TITL;
+  /* ── Badge 選手 ── */
+  const BADGE_H=36, BADGE_R=8;
+  const drawBadge=(name,bx,by,bw,isA)=>{
+    const fy=by+(RH-BADGE_H)/2;
+    roundRect(bx,fy,bw,BADGE_H,BADGE_R, isA?'#2d6a4f':'#c05a2e');
+    c.fillStyle='#fff'; c.font='bold 15px sans-serif'; c.textAlign='center';
+    const maxW=bw-16; let s=name;
+    while(c.measureText(s).width>maxW&&s.length>1) s=s.slice(0,-1);
+    if(s!==name) s=s.slice(0,-1)+'…';
+    c.fillText(s, bx+bw/2, fy+BADGE_H/2+5.5);
+  };
 
-  courts.forEach(n => {
-    const matches = scheduleMatches.filter(m=>m.court===n);
-    if (!matches.length) return;
-    const clr = _COURT_CLR[n]||'#333';
-    const x0  = MG;
+  let y=TITL;
 
-    /* 場地標題 */
-    ctx.fillStyle='#f5f5f5'; ctx.fillRect(x0,y,TW,CTH);
-    ctx.fillStyle=clr;       ctx.fillRect(x0,y,6,CTH);
-    ctx.strokeStyle='#ddd';  ctx.lineWidth=1; ctx.strokeRect(x0+.5,y+.5,TW-1,CTH-1);
-    ctx.fillStyle='#222'; ctx.font='bold 17px sans-serif'; ctx.textAlign='left';
-    ctx.fillText(`場地 ${n}　共 ${matches.length} 場`, x0+18, y+CTH/2+6);
-    y += CTH;
+  courts.forEach(n=>{
+    const matches=scheduleMatches.filter(m=>m.court===n);
+    if(!matches.length) return;
 
-    /* 欄位標題 */
-    let cx = x0;
-    ['場次','類型','隊伍 A','隊伍 B','比分記錄'].forEach((h,i)=>{
-      cell(h, cx, y, COL[i], THH, {bg:'#efefef',bold:true,fs:13,clr:'#555'});
-      cx+=COL[i];
-    });
-    y += THH;
+    /* 場地數 */
+    const pset=new Set();
+    matches.forEach(m=>[m.playerA1,m.playerA2,m.playerB1,m.playerB2].forEach(p=>p&&pset.add(p)));
 
-    /* 各場次 */
+    /* ── Court header ── */
+    roundRect(MG, y, CW-MG*2, HDR, 10, '#1b4332');
+    c.fillStyle='#fff'; c.font='bold 17px sans-serif'; c.textAlign='left';
+    c.fillText(`📍 場地 ${n}（${pset.size} 人・${matches.length} 場）`, MG+18, y+HDR/2+6);
+    y+=HDR;
+
+    /* ── 各場次 ── */
     matches.forEach((m,i)=>{
-      const bg = i%2===1?'#fafafa':'#fff';
-      const no = `第${_CN[i]||String(i+1)}場`;
-      const tp = m.type==='doubles'?'雙打':'單打';
-      const a  = m.type==='doubles'
-        ?`${stripPrefix(m.playerA1)} / ${stripPrefix(m.playerA2)}`
-        :stripPrefix(m.playerA1);
-      const b  = m.type==='doubles'
-        ?`${stripPrefix(m.playerB1)} / ${stripPrefix(m.playerB2)}`
-        :stripPrefix(m.playerB1);
-      cx = x0;
-      [no, tp, a, b, '___:___'].forEach((t,ci)=>{
-        cell(t, cx, y, COL[ci], RH, {
-          bg, align:ci<=1?'center':'left',
-          clr:ci===4?'#bbb':'#222', fs:16
-        });
-        cx+=COL[ci];
-      });
-      y += RH;
-    });
+      const bg=i%2===0?'#ffffff':'#eaf4ef';
+      c.fillStyle=bg; c.fillRect(MG,y,CW-MG*2,RH);
 
-    y += GAP;
+      /* 場次號碼 */
+      c.fillStyle='#555'; c.font='bold 14px sans-serif'; c.textAlign='center';
+      c.fillText(`#${String(i+1).padStart(2,'0')}`, MG+NUM_W/2, y+RH/2+5);
+
+      const x0 = MG+NUM_W+6;
+      const isD = m.type==='doubles';
+      const a1=stripPrefix(m.playerA1), a2=isD?stripPrefix(m.playerA2):'';
+      const b1=stripPrefix(m.playerB1), b2=isD?stripPrefix(m.playerB2):'';
+
+      if(isD){
+        const pw=(PLAYER_AREA/2-6)/2-3; // 4 badges
+        drawBadge(a1, x0,            y, pw, true);
+        drawBadge(a2, x0+pw+4,       y, pw, true);
+        /* VS */
+        c.fillStyle='#aaa'; c.font='bold 13px sans-serif'; c.textAlign='center';
+        c.fillText('VS', x0+pw*2+8+VS_W/2, y+RH/2+5);
+        drawBadge(b1, x0+pw*2+8+VS_W+2, y, pw, false);
+        drawBadge(b2, x0+pw*3+12+VS_W+2, y, pw, false);
+      } else {
+        const pw=(PLAYER_AREA-VS_W)/2-4;
+        drawBadge(a1, x0, y, pw, true);
+        c.fillStyle='#aaa'; c.font='bold 13px sans-serif'; c.textAlign='center';
+        c.fillText('VS', x0+pw+4+VS_W/2, y+RH/2+5);
+        drawBadge(b1, x0+pw+4+VS_W+4, y, pw, false);
+      }
+
+      /* 比分欄 */
+      const sx=CW-MG-SCORE_W+4;
+      roundRect(sx, y+12, SCORE_W-12, RH-24, 6, '#fff');
+      c.strokeStyle='#ddd'; c.lineWidth=1.5;
+      c.stroke();
+      c.fillStyle='#ccc'; c.font='15px sans-serif'; c.textAlign='center';
+      c.fillText('___:___', sx+(SCORE_W-12)/2, y+RH/2+5.5);
+
+      /* 分隔線 */
+      c.strokeStyle='#e8e8e8'; c.lineWidth=1;
+      c.beginPath(); c.moveTo(MG,y+RH); c.lineTo(CW-MG,y+RH); c.stroke();
+
+      y+=RH;
+    });
+    y+=GAP;
   });
 
-  /* ── 輸出圖片 ── */
-  const dataUrl = canvas.toDataURL('image/png');
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-  if (isIOS) {
-    /* iOS：長按浮層存圖 */
-    const ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;flex-direction:column;align-items:center;padding:16px;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;';
-    const hint = document.createElement('div');
-    hint.style.cssText = 'color:#fff;font-size:14px;font-weight:700;';
-    hint.textContent = '📲 長按圖片 → 儲存到相簿';
-    const img = document.createElement('img');
-    img.src = dataUrl;
-    img.style.cssText = 'max-width:100%;border-radius:8px;';
-    const btn = document.createElement('button');
-    btn.textContent = '✕ 關閉';
-    btn.style.cssText = 'padding:10px 28px;border-radius:99px;border:2px solid #fff;background:transparent;color:#fff;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;';
-    btn.onclick = ()=>document.body.removeChild(ov);
-    ov.append(hint, img, btn);
+  /* ── 輸出 ── */
+  const dataUrl=cv.toDataURL('image/png');
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  if(isIOS){
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;';
+    const hint=document.createElement('div');
+    hint.style.cssText='color:#fff;font-size:14px;font-weight:700;text-align:center;';
+    hint.textContent='📲 長按圖片 → 儲存到相簿';
+    const img=document.createElement('img');
+    img.src=dataUrl; img.style.cssText='max-width:100%;border-radius:10px;';
+    const btn=document.createElement('button');
+    btn.textContent='✕ 關閉';
+    btn.style.cssText='padding:10px 28px;border-radius:99px;border:2px solid #fff;background:transparent;color:#fff;font-size:14px;font-weight:700;cursor:pointer;';
+    btn.onclick=()=>document.body.removeChild(ov);
+    ov.append(hint,img,btn);
     document.body.appendChild(ov);
   } else {
-    /* Android / 桌面：直接下載 */
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = 'MCVS_場次表.png';
+    const a=document.createElement('a');
+    a.href=dataUrl; a.download='MCVS_場次表.png';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    showToast('✅ 圖片已下載，請至下載資料夾查看');
+    showToast('✅ 圖片已下載');
   }
 }
 
