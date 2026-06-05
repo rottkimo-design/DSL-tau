@@ -2036,7 +2036,7 @@ function renderQrGrid() {
       ? players.map(p => `<div class="qr-player">${esc(p)}</div>`).join('')
       : `<div class="qr-no-players">尚無選手資料</div>`;
 
-    const qrImg   = `<div class="qr-img-wrap"><img class="qr-img" src="${qrSrc}" alt="場地 ${n} QR Code"><div class="qr-center-text">${courtChar}</div></div>`;
+    const qrImg   = `<a href="${url}" target="_blank" style="display:inline-block;flex-shrink:0"><div class="qr-img-wrap"><img class="qr-img" src="${qrSrc}" alt="場地 ${n} QR Code"><div class="qr-center-text">${courtChar}</div></div></a>`;
     const pList   = `<div class="qr-players">${playerListHtml}</div>`;
 
     // QR Code 在左，選手名單在右
