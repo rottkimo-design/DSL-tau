@@ -1021,6 +1021,9 @@
 <button id="phone-toggle-btn" onclick="togglePhone()" title="切換手機/電腦顯示模式">📱 手機模式</button>
 
 <script>
+/* ── HTML 跳脫（防 XSS）── */
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 /* ═══════════════════════════════════════════
    SHARED DATA
 ═══════════════════════════════════════════ */
@@ -1101,12 +1104,12 @@ function _teamLines(team, isWinner, dot, pos) {
     return `<div style="display:flex;align-items:center;justify-content:center;gap:6px">` +
       `<div style="font-size:18px;line-height:1;flex-shrink:0">${dot}</div>` +
       `<div style="text-align:left;min-width:0">` +
-        `<div class="mi-team-name ${cls}" style="white-space:nowrap">${trophy}${p1}${parts[0]}</div>` +
-        `<div class="mi-team-name" style="white-space:nowrap">${p2}${parts[1]}</div>` +
+        `<div class="mi-team-name ${cls}" style="white-space:nowrap">${trophy}${p1}${esc(parts[0])}</div>` +
+        `<div class="mi-team-name" style="white-space:nowrap">${p2}${esc(parts[1])}</div>` +
       `</div>` +
     `</div>`;
   }
-  return `<div class="mi-team-name ${cls}" style="white-space:nowrap">${trophy}${dot} ${team}</div>`;
+  return `<div class="mi-team-name ${cls}" style="white-space:nowrap">${trophy}${dot} ${esc(team)}</div>`;
 }
 
 function renderMatchItem(m, i) {
@@ -1956,7 +1959,7 @@ function renderViewTab() {
       <tbody>
         ${rows.map((r,i) => `<tr>
           <td><span class="rk-rank ${medalCls(i)}">${i+1}</span></td>
-          <td>${r.name}</td>
+          <td>${esc(r.name)}</td>
           <td style="color:var(--green-dark);font-weight:700">${r.wins}</td>
           <td style="color:var(--red)">${r.losses}</td>
           <td>${r.pf}</td>
@@ -2030,7 +2033,7 @@ function renderQrGrid() {
     });
 
     const playerListHtml = players.length
-      ? players.map(p => `<div class="qr-player">${p}</div>`).join('')
+      ? players.map(p => `<div class="qr-player">${esc(p)}</div>`).join('')
       : `<div class="qr-no-players">尚無選手資料</div>`;
 
     const qrImg   = `<div class="qr-img-wrap"><img class="qr-img" src="${qrSrc}" alt="場地 ${n} QR Code"><div class="qr-center-text">${courtChar}</div></div>`;
@@ -2140,6 +2143,7 @@ async function saveQrImage() {
 <!-- ══════════ FIREBASE REALTIME SYNC ══════════ -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
 (function initFirebaseSync() {
   // ── 全域：讓 submitScore() 可寫回 Firebase ──
@@ -2270,6 +2274,11 @@ async function saveQrImage() {
     const db = firebase.database();
 
     badgeConnecting();
+
+    // 匿名登入（讓 Firebase Security Rules 可以做 auth != null 驗證）
+    firebase.auth().signInAnonymously().catch(err => {
+      console.warn('Firebase anonymous auth failed:', err);
+    });
 
     // 先讀取場地名稱
     db.ref(`ntcpa/venues/${VENUE_ID}/config`).once('value', snap => {
