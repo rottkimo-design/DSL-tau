@@ -2036,12 +2036,14 @@ function printSchedule(courtFilter) {
     if(fill){c.fillStyle=fill;c.fill();}
   };
 
-  /* ── Badge 選手 ── */
+  /* ── Badge 選手（白底黑字） ── */
   const BADGE_H=36, BADGE_R=8;
   const drawBadge=(name,bx,by,bw,isA)=>{
     const fy=by+(RH-BADGE_H)/2;
-    roundRect(bx,fy,bw,BADGE_H,BADGE_R, isA?'#2d6a4f':'#c05a2e');
-    c.fillStyle='#fff'; c.font='bold 15px sans-serif'; c.textAlign='center';
+    roundRect(bx,fy,bw,BADGE_H,BADGE_R, '#fff');
+    c.strokeStyle='#ddd'; c.lineWidth=1;
+    c.stroke();
+    c.fillStyle='#333'; c.font='bold 15px sans-serif'; c.textAlign='center';
     const maxW=bw-16; let s=name;
     while(c.measureText(s).width>maxW&&s.length>1) s=s.slice(0,-1);
     if(s!==name) s=s.slice(0,-1)+'…';
@@ -2066,7 +2068,7 @@ function printSchedule(courtFilter) {
 
     /* ── 各場次 ── */
     matches.forEach((m,i)=>{
-      const bg=i%2===0?'#ffffff':'#eaf4ef';
+      const bg='#ffffff';  // 全白底
       c.fillStyle=bg; c.fillRect(MG,y,CW-MG*2,RH);
 
       /* 場次號碼 */
@@ -2151,11 +2153,11 @@ function _showSaveOverlay(dataUrl, filename) {
     let isZoomed = false;
     const updateImg = () => {
       if (isZoomed) {
-        img.style.cssText = 'max-width:300%;max-height:300%;border-radius:0;cursor:zoom-out;filter:grayscale(100%);';
+        img.style.cssText = 'max-width:300%;max-height:300%;border-radius:0;cursor:zoom-out;';
         imgContainer.style.alignItems = 'flex-start';
         imgContainer.style.justifyContent = 'flex-start';
       } else {
-        img.style.cssText = 'max-width:90%;max-height:80vh;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.3);cursor:zoom-in;filter:grayscale(100%);';
+        img.style.cssText = 'max-width:90%;max-height:80vh;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.3);cursor:zoom-in;';
         imgContainer.style.alignItems = 'center';
         imgContainer.style.justifyContent = 'center';
       }
