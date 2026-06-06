@@ -2135,11 +2135,11 @@ function _showSaveOverlay(dataUrl, filename) {
     return;
   }
 
-  // 桌面版：只顯示預覽（無下載），點擊放大，可捲動
+  // 桌面版：只顯示預覽（無下載），點擊放大，可捲動 — 白底黑字
   if (isDesktop) {
     const ov = document.createElement('div');
     ov.style.cssText = [
-      'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;',
+      'position:fixed;inset:0;background:#f5f5f5;z-index:99999;',
       'display:flex;flex-direction:column;align-items:center;padding:20px;gap:16px;',
     ].join('');
 
@@ -2167,7 +2167,7 @@ function _showSaveOverlay(dataUrl, filename) {
 
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '✕ 關閉';
-    closeBtn.style.cssText = 'padding:10px 28px;border-radius:99px;border:2px solid #fff;background:transparent;color:#fff;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;';
+    closeBtn.style.cssText = 'padding:10px 28px;border-radius:99px;border:2px solid #333;background:transparent;color:#333;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;';
     closeBtn.onclick = () => document.body.removeChild(ov);
 
     ov.append(imgContainer, closeBtn);
