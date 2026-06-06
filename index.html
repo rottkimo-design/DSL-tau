@@ -2036,18 +2036,18 @@ function printSchedule(courtFilter) {
     if(fill){c.fillStyle=fill;c.fill();}
   };
 
-  /* ── Badge 選手（白底黑字） ── */
-  const BADGE_H=36, BADGE_R=8;
+  /* ── Badge 選手（白底黑字 22px） ── */
+  const BADGE_H=42, BADGE_R=8;
   const drawBadge=(name,bx,by,bw,isA)=>{
     const fy=by+(RH-BADGE_H)/2;
     roundRect(bx,fy,bw,BADGE_H,BADGE_R, '#fff');
     c.strokeStyle='#ddd'; c.lineWidth=1;
     c.stroke();
-    c.fillStyle='#333'; c.font='bold 15px sans-serif'; c.textAlign='center';
-    const maxW=bw-16; let s=name;
+    c.fillStyle='#333'; c.font='bold 22px sans-serif'; c.textAlign='center';
+    const maxW=bw-10; let s=name;
     while(c.measureText(s).width>maxW&&s.length>1) s=s.slice(0,-1);
     if(s!==name) s=s.slice(0,-1)+'…';
-    c.fillText(s, bx+bw/2, fy+BADGE_H/2+5.5);
+    c.fillText(s, bx+bw/2, fy+BADGE_H/2+6);
   };
 
   let y=TITL;
@@ -2083,11 +2083,11 @@ function printSchedule(courtFilter) {
       /* A隊（左側） */
       const axStart = MG+NUM_W+6;
       if(m.type==='doubles'){
-        const pw = (sideW-8)/2;
+        const pw = (sideW-2)/2;
         drawBadge(a1, axStart, y, pw, true);
-        drawBadge(a2, axStart+pw+4, y, pw, true);
+        drawBadge(a2, axStart+pw+2, y, pw, true);
       } else {
-        drawBadge(a1, axStart, y, sideW-4, true);
+        drawBadge(a1, axStart, y, sideW-2, true);
       }
 
       /* 比分欄（中間） */
@@ -2101,11 +2101,11 @@ function printSchedule(courtFilter) {
       /* B隊（右側） */
       const bxStart = sx+SCORE_W+6;
       if(m.type==='doubles'){
-        const pw = (sideW-8)/2;
+        const pw = (sideW-2)/2;
         drawBadge(b1, bxStart, y, pw, false);
-        drawBadge(b2, bxStart+pw+4, y, pw, false);
+        drawBadge(b2, bxStart+pw+2, y, pw, false);
       } else {
-        drawBadge(b1, bxStart, y, sideW-4, false);
+        drawBadge(b1, bxStart, y, sideW-2, false);
       }
 
       /* 分隔線 */
