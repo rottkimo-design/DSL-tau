@@ -699,7 +699,7 @@
     <div class="home-top">
       <div class="home-title">選擇場地</div>
       <div style="display:flex;gap:6px">
-        <button class="import-btn" onclick="printSchedule(null)">📸 場次表</button>
+        <button class="import-btn" id="schedule-save-btn" onclick="printSchedule(null)">📸 場次表</button>
         <button class="import-btn" onclick="showSec('qr')">📋 QR Code</button>
       </div>
     </div>
@@ -1995,8 +1995,30 @@ function renderViewTab() {
 /* ── 場次表存成圖片（Canvas 2D，無外部套件）── */
 const _COURT_CLR = {1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22'};
 
-function printSchedule(courtFilter) {
-  const courts = courtFilter ? [courtFilter] : [1,2,3,4];
+async function printSchedule(courtFilter) {
+  // 按場地分批：courtFilter = null 時生成 4 個檔案
+  if (!courtFilter) {
+    const btn = document.getElementById('schedule-save-btn');
+    const origText = btn.textContent;
+    btn.disabled = true;
+
+    for (let c of [1,2,3,4]) {
+      await new Promise(resolve => {
+        btn.textContent = `⏳ 場地 ${c} 中…`;
+        setTimeout(() => {
+          printSchedule(c);
+          resolve();
+        }, 100);
+      });
+    }
+
+    btn.textContent = origText;
+    btn.disabled = false;
+    showToast('✅ 已匯出全部場地');
+    return;
+  }
+
+  const courts = [courtFilter];
 
   /* ── 版面常數 ── */
   const SC=2, CW=900, MG=16, RH=60, HDR=52, TITL=70, GAP=20;
@@ -2119,7 +2141,8 @@ function printSchedule(courtFilter) {
 
   /* ── 輸出 ── */
   const dataUrl=cv.toDataURL('image/png');
-  _showSaveOverlay(dataUrl, 'MCVS_場次表.png');
+  const filename = `MCVS_場地${courtFilter}_場次表.png`;
+  _showSaveOverlay(dataUrl, filename);
 }
 
 /* ── 儲存圖片浮層（桌面預覽 / iOS Web Share / Android 下載）── */
