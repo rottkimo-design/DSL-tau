@@ -2335,16 +2335,30 @@ if (window.location.pathname === '/qr') {
 }
 
 // 掃碼進入：立刻切換到載入畫面，避免閃現首頁四場地
+let _urlCourtLoadTimeout;
 if (_urlCourt) {
   document.querySelectorAll('#page-record .sec').forEach(s => s.classList.remove('active'));
   document.getElementById('sec-loading').classList.add('active');
   const t = document.getElementById('sec-loading-text');
   if (t) t.textContent = `場地 ${_urlCourt} 載入中…`;
+
+  // 超時 10 秒後提示重新掃碼或返回主頁
+  _urlCourtLoadTimeout = setTimeout(() => {
+    if (!_urlCourtHandled) {
+      const t = document.getElementById('sec-loading-text');
+      if (t) t.textContent = `⚠️ 載入逾時，請重新掃碼或返回`;
+      window.showDslToast('連線超時，請檢查網路後重試', 8000);
+    }
+  }, 10000);
 }
 
 function _handleUrlCourt() {
   if (!_urlCourt || _urlCourtHandled) return;
   if (!scheduleMatches.length) return;  // Firebase 尚未載入，繼續等待
+
+  // 成功載入，清除超時計時器
+  if (_urlCourtLoadTimeout) clearTimeout(_urlCourtLoadTimeout);
+
   _urlCourtHandled = true;
   const matches = scheduleMatches.filter(m => m.court === _urlCourt);
   if (!matches.length) {
