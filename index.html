@@ -2151,11 +2151,11 @@ function _showSaveOverlay(dataUrl, filename) {
     let isZoomed = false;
     const updateImg = () => {
       if (isZoomed) {
-        img.style.cssText = 'max-width:300%;max-height:300%;border-radius:0;cursor:zoom-out;';
+        img.style.cssText = 'max-width:300%;max-height:300%;border-radius:0;cursor:zoom-out;filter:grayscale(100%);';
         imgContainer.style.alignItems = 'flex-start';
         imgContainer.style.justifyContent = 'flex-start';
       } else {
-        img.style.cssText = 'max-width:90%;max-height:80vh;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.3);cursor:zoom-in;';
+        img.style.cssText = 'max-width:90%;max-height:80vh;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.3);cursor:zoom-in;filter:grayscale(100%);';
         imgContainer.style.alignItems = 'center';
         imgContainer.style.justifyContent = 'center';
       }
