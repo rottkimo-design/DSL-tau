@@ -2072,8 +2072,8 @@ function printSchedule(courtFilter) {
       c.fillStyle=bg; c.fillRect(MG,y,CW-MG*2,RH);
 
       /* 場次號碼 */
-      c.fillStyle='#555'; c.font='bold 14px sans-serif'; c.textAlign='center';
-      c.fillText(`#${String(i+1).padStart(2,'0')}`, MG+NUM_W/2, y+RH/2+5);
+      c.fillStyle='#333'; c.font='bold 22px sans-serif'; c.textAlign='center';
+      c.fillText(`#${String(i+1).padStart(2,'0')}`, MG+NUM_W/2, y+RH/2+6);
 
       /* 新布局：場次 | A隊 | 比分 | B隊 */
       const sideW = Math.floor((CW-MG*2-NUM_W-SCORE_W)/2); // A隊和B隊各佔寬度
