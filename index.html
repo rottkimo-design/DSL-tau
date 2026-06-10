@@ -1953,8 +1953,10 @@ restoreSchedule();
   };
 
   // ── Firebase config（與 NTCPA DUPR Score 共用同一資料庫）──
+  // ⚠️ 舊 API Key 已撤銷！請立刻在 Firebase Console 重新生成新 Key
+  // 然後在 Vercel 環境變數中設定新 Key（名稱：FIREBASE_API_KEY）
   const firebaseConfig = {
-    apiKey:            "[REMOVED]",
+    apiKey:            window.__FIREBASE_API_KEY__ || "",  // 從 Vercel 環境變數注入
     authDomain:        "ntcpa-dupr-score.firebaseapp.com",
     databaseURL:       "https://ntcpa-dupr-score-default-rtdb.firebaseio.com",
     projectId:         "ntcpa-dupr-score",
