@@ -160,12 +160,6 @@
   .mi-pill.wa{background:#fef9e7;color:#b7950b;}
   .mi-pill.wb{background:#d6eaf8;color:var(--blue);}
 
-  .cl-add-manual{
-    width:100%;padding:14px;border:2px dashed #c8d6e5;border-radius:var(--radius);
-    background:#fff;font-size:15px;font-weight:700;color:var(--blue);
-    cursor:pointer;text-align:center;margin-top:6px;transition:all .2s;
-  }
-  .cl-add-manual:active{background:#eaf4fb;}
 
   /* ════════ SCORE WIZARD ════════ */
   .wizard-header{
@@ -680,7 +674,6 @@
       <div class="cl-sub" id="cl-sub"></div>
     </div>
     <div id="cl-match-list"></div>
-    <button class="cl-add-manual" onclick="startManualEntry()">＋ 手動新增一場</button>
   </div>
 
   <!-- ── SEC Q: Quick score input ── -->
@@ -998,8 +991,9 @@ function selectCourtTile(n) {
   if (matches.length > 0) {
     showCourtList(n, matches);
   } else {
-    // No schedule — go to manual entry
-    startManualEntry();
+    // No schedule — show hint
+    alert('此場地沒有排程，請先匯入 CSV 檔案');
+    showSec('home');
   }
 }
 
@@ -1320,17 +1314,6 @@ function goNextMatch() {
 }
 
 /* ── Start manual entry ── */
-function startManualEntry() {
-  st.prefillIdx = null;
-  // Clear fields
-  ['a1','a2','b1','b2','a1d','a2d','b1d','b2d'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('prefill-banner').style.display='none';
-  resetScores();
-  setType('singles'); setScoreType('SIDEOUT');
-  document.getElementById('wizard-title').textContent = `場地 ${st.court} — 手動輸入`;
-  showSec('wizard');
-  goWizardStep(1);
-}
 
 /* ── Wizard navigation ── */
 function goWizardStep(n) {
