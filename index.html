@@ -440,6 +440,12 @@
     opacity:1;transform:translateX(-50%) scale(1);
     animation:winner-bounce .5s ease infinite alternate;
   }
+  .qs-team-btn.selected{transform:scale(1.04);}
+  .qs-team-btn.side-a.selected{border-color:var(--orange);box-shadow:0 0 0 4px rgba(255,153,0,.35),0 4px 16px rgba(255,153,0,.25);}
+  .qs-team-btn.side-b.selected{border-color:var(--blue);box-shadow:0 0 0 4px rgba(33,150,243,.35),0 4px 16px rgba(33,150,243,.25);}
+  .qs-team-btn.unselected{opacity:.45;transform:scale(.97);}
+  .qs-team-btn.selected .qs-winner-badge{opacity:1;transform:translateX(-50%) scale(1);animation:winner-bounce .5s ease infinite alternate;}
+  #qs-winner-confirm{display:none;margin-top:20px;width:100%;font-size:17px;padding:14px;border-radius:14px;}
   @keyframes winner-bounce{
     from{transform:translateX(-50%) scale(1) translateY(0);}
     to{transform:translateX(-50%) scale(1.12) translateY(-4px);}
@@ -783,19 +789,20 @@
       <div id="qs-phase-winner">
         <div class="qs-pick-title" id="qs-pick-title">請點選勝隊 WINNER</div>
         <div class="qs-teams">
-          <div class="qs-team-btn side-a" onclick="qsPickWinner('a')">
+          <div class="qs-team-btn side-a" id="qs-btn-a" onclick="qsSelectWinner('a')">
             <div class="qs-winner-badge">WINNER 🏆</div>
             <div class="qs-tside">🟠 A 隊</div>
             <div class="qs-tname" id="qs-name-a">—</div>
             <div class="qs-tid" id="qs-id-a"></div>
           </div>
-          <div class="qs-team-btn side-b" onclick="qsPickWinner('b')">
+          <div class="qs-team-btn side-b" id="qs-btn-b" onclick="qsSelectWinner('b')">
             <div class="qs-winner-badge">WINNER 🏆</div>
             <div class="qs-tside">🔵 B 隊</div>
             <div class="qs-tname" id="qs-name-b">—</div>
             <div class="qs-tid" id="qs-id-b"></div>
           </div>
         </div>
+        <button id="qs-winner-confirm" class="btn btn-primary" onclick="qsPickWinner()">✅ 確認勝隊</button>
       </div>
 
       <!-- Phase 2: enter score -->
@@ -1205,7 +1212,34 @@ function qsUpdateLog(){
   }).join('');
 }
 
-function qsPickWinner(side){
+function qsSelectWinner(side){
+  const btnA = document.getElementById('qs-btn-a');
+  const btnB = document.getElementById('qs-btn-b');
+  const confirmBtn = document.getElementById('qs-winner-confirm');
+  btnA.classList.toggle('selected',  side==='a');
+  btnA.classList.toggle('unselected', side==='b');
+  btnB.classList.toggle('selected',  side==='b');
+  btnB.classList.toggle('unselected', side==='a');
+  const winnerName = side==='a' ? qs.m.teamA : qs.m.teamB;
+  confirmBtn.textContent = `✅ 確認 ${winnerName} 獲勝`;
+  confirmBtn.style.display = '';
+  qs._pendingSide = side;
+}
+
+function qsWinnerConfirmReset(){
+  const btnA = document.getElementById('qs-btn-a');
+  const btnB = document.getElementById('qs-btn-b');
+  if(btnA){ btnA.classList.remove('selected','unselected'); }
+  if(btnB){ btnB.classList.remove('selected','unselected'); }
+  const confirmBtn = document.getElementById('qs-winner-confirm');
+  if(confirmBtn){ confirmBtn.style.display='none'; }
+  qs._pendingSide = null;
+}
+
+function qsPickWinner(){
+  const side = qs._pendingSide;
+  if(!side) return;
+  qsWinnerConfirmReset();
   qs.selectedSide = side;
   qs.winScore = 11;
   const gameNum = qs.games.length + 1;
@@ -1283,6 +1317,7 @@ function togglePhone(){
 function qsReset(){
   qs.games=[];
   qs.selectedSide=null;
+  qsWinnerConfirmReset();
   qsUpdateLog();
   document.getElementById('qs-pick-title').textContent='請點選勝隊 WINNER';
   qsShowPhase('winner');
