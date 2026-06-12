@@ -2303,8 +2303,9 @@ const _COURT_COLORS = {1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22'};
 
 function renderQrGrid() {
   const grid = document.getElementById('qr-grid');
+  const _vParam = (window._ntcpaVenueId && window._ntcpaVenueId !== 'MCVS_Court') ? `?v=${window._ntcpaVenueId}` : '';
   grid.innerHTML = [1,2,3,4].map(n => {
-    const url = `${window.location.origin}/c${n}`;
+    const url = `${window.location.origin}/c${n}${_vParam}`;
     const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=10&ecc=H&data=${encodeURIComponent(url)}`;
     // 根據場地 ID 決定中心字
     const _venueChars = {
@@ -2438,7 +2439,7 @@ async function saveQrImage() {
       img.src=src;
     });
     const qrImgs = await Promise.all(courtData.map(({n})=>
-      loadImg(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&ecc=H&data=${encodeURIComponent(window.location.origin+'/c'+n)}`)
+      loadImg(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&ecc=H&data=${encodeURIComponent(window.location.origin+'/c'+n+((window._ntcpaVenueId&&window._ntcpaVenueId!=='MCVS_Court')?'?v='+window._ntcpaVenueId:''))}`)
     ));
 
     let y = 46;
