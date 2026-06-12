@@ -440,7 +440,7 @@
     opacity:1;transform:translateX(-50%) scale(1);
     animation:winner-bounce .5s ease infinite alternate;
   }
-  .qs-team-btn.selected{transform:scale(1.10);transition:transform 0.06s ease,box-shadow 0.06s ease,opacity 0.06s ease;}
+  .qs-team-btn.selected{transform:scale(1.20);transition:transform 0.06s ease,box-shadow 0.06s ease,opacity 0.06s ease;}
   .qs-team-btn.side-a.selected{border-color:var(--orange);box-shadow:0 0 0 5px rgba(255,153,0,.5),0 6px 20px rgba(255,153,0,.3);}
   .qs-team-btn.side-b.selected{border-color:var(--blue);box-shadow:0 0 0 5px rgba(33,150,243,.5),0 6px 20px rgba(33,150,243,.3);}
   .qs-team-btn.unselected{opacity:.38;transform:scale(.94);transition:transform 0.06s ease,opacity 0.06s ease;}
@@ -1427,8 +1427,9 @@ function startFromSchedule(rawIdx) {
     ? [m.playerB1DuprId,m.playerB2DuprId].filter(Boolean).join(' / ')
     : (m.playerB1DuprId||'');
 
-  document.getElementById('qs-name-a').textContent = m.teamA;
-  document.getElementById('qs-name-b').textContent = m.teamB;
+  const _splitName = t => (t||'').split(' / ').map(n=>esc(n)).join('<br>');
+  document.getElementById('qs-name-a').innerHTML = _splitName(m.teamA);
+  document.getElementById('qs-name-b').innerHTML = _splitName(m.teamB);
   document.getElementById('qs-id-a').textContent   = idA;
   document.getElementById('qs-id-b').textContent   = idB;
 
