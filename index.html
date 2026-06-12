@@ -1480,7 +1480,7 @@ function doSubmitScore({ sm, gamesObj, aScore, bScore, aWins, bWins, m, payload 
     const fbIdx = window._ntcpaMatchIdx[sm._ntcpaId];
     if(fbIdx !== undefined){
       window._fbDb
-        .ref(`ntcpa/venues/${window._fbVenueId||window._ntcpaVenueId}/data`)
+        .ref(`ntcpa/venues/${window._ntcpaVenueId}/data`)
         .update({
           [`matches/${fbIdx}/aScore`]: aScore,
           [`matches/${fbIdx}/bScore`]: bScore,
@@ -1530,7 +1530,7 @@ function requestNtcpaApproval({ sm, gamesObj, aScore, bScore, aWins, bWins, m, p
   }
 
   const reqRef = window._fbDb
-    .ref(`ntcpa/venues/${window._fbVenueId||window._ntcpaVenueId}/approval_requests`)
+    .ref(`ntcpa/venues/${window._ntcpaVenueId}/approval_requests`)
     .push();
 
   reqRef.set({
@@ -1710,7 +1710,7 @@ function submitScore(){
         const aScore = st.g[1] ? (st.g[1].a || 0) : 0;
         const bScore = st.g[1] ? (st.g[1].b || 0) : 0;
         window._fbDb
-          .ref(`ntcpa/venues/${window._fbVenueId||window._ntcpaVenueId}/data`)
+          .ref(`ntcpa/venues/${window._ntcpaVenueId}/data`)
           .update({
             [`matches/${fbIdx}/aScore`]: aScore,
             [`matches/${fbIdx}/bScore`]: bScore,
@@ -2310,7 +2310,7 @@ function renderQrGrid() {
     // 根據場地 ID 決定中心字
     const _venueChars = {
       'MCVS_Court': {1:'木',2:'柵',3:'高',4:'工'},
-      'ZZHS_Court': {1:'中',2:'正',3:'高',4:'中'},
+      'ZZSH_Court': {1:'中',2:'正',3:'高',4:'中'},
     };
     const courtChar = (_venueChars[window._ntcpaVenueId] || {1:'1',2:'2',3:'3',4:'4'})[n] || String(n);
 
@@ -2560,11 +2560,6 @@ async function saveQrImage() {
   const VENUE_ID = new URLSearchParams(window.location.search).get('v') || 'MCVS_Court';
   window._ntcpaVenueId = VENUE_ID;   // 暴露供 submitScore 使用
 
-  // Firebase 路徑別名（NTCPA admin 使用 ZZSH_Court，URL 顯示 ZZHS_Court）
-  const _fbVenueAlias = { 'ZZHS_Court': 'ZZSH_Court' };
-  const FB_VENUE_ID = _fbVenueAlias[VENUE_ID] || VENUE_ID;
-  window._fbVenueId = FB_VENUE_ID;  // 供 submitScore 寫回 Firebase 使用
-
   // 從 VENUE_ID 取得顯示名稱（取 _Court 前的部分）
   const VENUE_SHORT = VENUE_ID.replace(/_Court$/i, '');
   document.title = `${VENUE_SHORT} 分數登記`;
@@ -2665,7 +2660,7 @@ async function saveQrImage() {
     });
 
     // 先讀取場地名稱
-    db.ref(`ntcpa/venues/${FB_VENUE_ID}/config`).once('value', snap => {
+    db.ref(`ntcpa/venues/${VENUE_ID}/config`).once('value', snap => {
       const cfg = snap.val();
       if (cfg && cfg.name) ntcpaVenueName = cfg.name;
     });
@@ -2674,7 +2669,7 @@ async function saveQrImage() {
     window._fbDb = db;
 
     // ── 監聽 NTCPA 廣播通知 ──
-    window._notifyRef = db.ref(`ntcpa/venues/${FB_VENUE_ID}/notify`);
+    window._notifyRef = db.ref(`ntcpa/venues/${VENUE_ID}/notify`);
     let _notifyReady = false;
     window._notifyRef.limitToLast(1).on('value', snap => {
       if (!_notifyReady) { _notifyReady = true; return; }
@@ -2702,7 +2697,7 @@ async function saveQrImage() {
     });
 
     // 即時監聽比賽資料
-    db.ref(`ntcpa/venues/${FB_VENUE_ID}/data`).on('value',
+    db.ref(`ntcpa/venues/${VENUE_ID}/data`).on('value',
       snap => {
         const data = snap.val();
         if (!data) { badgeOffline(); return; }
