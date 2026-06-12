@@ -2572,7 +2572,12 @@ async function saveQrImage() {
   const VENUE_ID = new URLSearchParams(window.location.search).get('v') || 'MCVS_Court';
   window._ntcpaVenueId = VENUE_ID;   // 暴露供 submitScore 使用
 
-  let ntcpaVenueName = 'MCVS';
+  // 從 VENUE_ID 取得顯示名稱（取 _Court 前的部分）
+  const VENUE_SHORT = VENUE_ID.replace(/_Court$/i, '');
+  document.title = `${VENUE_SHORT} 分數登記`;
+  document.querySelector('h1').textContent = `🏓 ${VENUE_SHORT} 分數登記`;
+
+  let ntcpaVenueName = VENUE_SHORT;
 
   // ── 狀態 badge ─────────────────────────────────────────────
   function setBadge(emoji, text, bg, color, border) {
