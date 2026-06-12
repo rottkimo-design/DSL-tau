@@ -1949,7 +1949,8 @@ restoreSchedule();
   };
 
   // 監聽的場地 ID（對應 NTCPA 管理後台）
-  const VENUE_ID = 'MCVS_Court';
+  // 可透過 URL 參數 ?v=XXX 切換場地，預設為 MCVS_Court
+  const VENUE_ID = new URLSearchParams(window.location.search).get('v') || 'MCVS_Court';
   window._ntcpaVenueId = VENUE_ID;   // 暴露供 submitScore 使用
 
   let ntcpaVenueName = 'MCVS';
