@@ -474,6 +474,11 @@
   .qs-sb-score-row{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;}
   .qs-sb-qmark{font-size:36px;font-weight:900;color:#2196f3;margin-top:6px;line-height:1;}
   .qs-sb-colon{font-size:30px;font-weight:900;color:var(--muted);flex-shrink:0;}
+  .qs-lose-hint{display:flex;margin-top:6px;margin-bottom:8px;}
+  .qs-lose-hint-spacer{flex:1;min-width:0;}
+  .qs-lose-hint-content{flex:1;min-width:0;text-align:center;}
+  .qs-lose-arrow{font-size:22px;color:#2196f3;line-height:1;margin-bottom:2px;}
+  .qs-lose-label{font-size:13px;font-weight:700;color:#1565c0;}
 
   .qs-win-row{
     display:flex;align-items:center;justify-content:center;
@@ -842,7 +847,15 @@
           </div>
         </div>
 
-        <div class="qs-lose-label">👇 點選敗方分數</div>
+        <!-- 箭頭對齊敗方欄位 -->
+        <div class="qs-lose-hint">
+          <div class="qs-lose-hint-spacer"></div>
+          <div class="qs-lose-hint-content">
+            <div class="qs-lose-arrow">↑</div>
+            <div class="qs-lose-label">點選「<strong>敗方</strong>」分數</div>
+          </div>
+        </div>
+
         <div class="qs-loser-grid" id="qs-loser-grid"></div>
         <div style="margin-top:10px;text-align:center;color:var(--muted);font-size:12px">
           選擇敗方分數即自動進入下一步
