@@ -440,10 +440,10 @@
     opacity:1;transform:translateX(-50%) scale(1);
     animation:winner-bounce .5s ease infinite alternate;
   }
-  .qs-team-btn.selected{transform:scale(1.04);}
-  .qs-team-btn.side-a.selected{border-color:var(--orange);box-shadow:0 0 0 4px rgba(255,153,0,.35),0 4px 16px rgba(255,153,0,.25);}
-  .qs-team-btn.side-b.selected{border-color:var(--blue);box-shadow:0 0 0 4px rgba(33,150,243,.35),0 4px 16px rgba(33,150,243,.25);}
-  .qs-team-btn.unselected{opacity:.45;transform:scale(.97);}
+  .qs-team-btn.selected{transform:scale(1.10);transition:transform 0.06s ease,box-shadow 0.06s ease,opacity 0.06s ease;}
+  .qs-team-btn.side-a.selected{border-color:var(--orange);box-shadow:0 0 0 5px rgba(255,153,0,.5),0 6px 20px rgba(255,153,0,.3);}
+  .qs-team-btn.side-b.selected{border-color:var(--blue);box-shadow:0 0 0 5px rgba(33,150,243,.5),0 6px 20px rgba(33,150,243,.3);}
+  .qs-team-btn.unselected{opacity:.38;transform:scale(.94);transition:transform 0.06s ease,opacity 0.06s ease;}
   .qs-team-btn.selected .qs-winner-badge{opacity:1;transform:translateX(-50%) scale(1);animation:winner-bounce .5s ease infinite alternate;}
   #qs-winner-confirm{display:none;margin-top:20px;width:100%;font-size:17px;padding:14px;border-radius:14px;}
   @keyframes winner-bounce{
