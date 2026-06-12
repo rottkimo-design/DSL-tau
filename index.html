@@ -501,17 +501,20 @@
     color:var(--green-dark);
   }
 
-  .qs-lose-label{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;}
+  .qs-loser-score-label{font-size:14px;font-weight:800;color:#c53030;letter-spacing:.5px;}
   .qs-loser-grid{
-    display:grid;gap:8px;
+    display:grid;gap:8px;width:100%;
     grid-template-columns:repeat(6,1fr);
   }
   .qs-loser-btn{
-    padding:12px 4px;border:2px solid #e0e0e0;border-radius:10px;
-    background:#fff;font-size:17px;font-weight:700;cursor:pointer;
-    text-align:center;transition:all .15s;user-select:none;
+    padding:11px 2px;border:none;border-radius:10px;
+    background:linear-gradient(180deg,#ff8a80,#e53e3e);
+    box-shadow:0 5px 0 #9b1c1c;
+    font-size:18px;font-weight:900;color:#fff;
+    cursor:pointer;text-align:center;
+    transition:transform .08s,box-shadow .08s;user-select:none;
   }
-  .qs-loser-btn:active{transform:scale(.92);background:#fdf2f2;border-color:var(--red);}
+  .qs-loser-btn:active{transform:translateY(4px);box-shadow:0 1px 0 #9b1c1c;}
 
   /* Confirm */
   .qs-game-row{
@@ -840,8 +843,8 @@
 
         <!-- 落敗隊伍卡片（含分數格）-->
         <div class="qs-loser-card">
-          <div class="qs-loser-card-role">落敗隊伍</div>
           <div class="qs-sb-name" id="qs-sb-lname">—</div>
+          <div class="qs-loser-score-label">落敗隊伍分數 ↓</div>
           <div class="qs-loser-grid" id="qs-loser-grid"></div>
         </div>
       </div>
