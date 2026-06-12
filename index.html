@@ -446,7 +446,15 @@
   .qs-team-btn.side-b.selected{border-color:var(--blue);box-shadow:0 0 0 5px rgba(33,150,243,.5),0 6px 20px rgba(33,150,243,.3);}
   .qs-team-btn.unselected{opacity:.38;transform:scale(.84);transition:transform 0.06s ease,opacity 0.06s ease;}
   .qs-team-btn.selected .qs-winner-badge{opacity:1;transform:translateX(-50%) scale(1);animation:winner-bounce .5s ease infinite alternate;}
-  #qs-winner-confirm{display:none;margin-top:20px;width:100%;font-size:17px;padding:14px;border-radius:14px;}
+  .qs-card-confirm{
+    display:none;margin-top:12px;width:90%;
+    font-size:16px;font-weight:800;padding:10px 0;border-radius:12px;
+    border:none;background:linear-gradient(135deg,#27ae60,#1e8449);
+    color:#fff;cursor:pointer;box-shadow:0 3px 0 #145a32;
+    transition:transform .08s,box-shadow .08s;
+  }
+  .qs-card-confirm:active{transform:translateY(2px);box-shadow:0 1px 0 #145a32;}
+  .qs-team-btn.selected .qs-card-confirm{display:block;}
   @keyframes winner-bounce{
     from{transform:translateX(-50%) scale(1) translateY(0);}
     to{transform:translateX(-50%) scale(1.12) translateY(-4px);}
@@ -822,15 +830,16 @@
             <div class="qs-tside">🟠 A 隊</div>
             <div class="qs-tname" id="qs-name-a">—</div>
             <div class="qs-tid" id="qs-id-a"></div>
+            <button class="qs-card-confirm" onclick="event.stopPropagation();qsPickWinner()">✅ 確認勝隊</button>
           </div>
           <div class="qs-team-btn side-b" id="qs-btn-b" onclick="qsSelectWinner('b')">
             <div class="qs-winner-badge">WINNER 🏆</div>
             <div class="qs-tside">🔵 B 隊</div>
             <div class="qs-tname" id="qs-name-b">—</div>
             <div class="qs-tid" id="qs-id-b"></div>
+            <button class="qs-card-confirm" onclick="event.stopPropagation();qsPickWinner()">✅ 確認勝隊</button>
           </div>
         </div>
-        <button id="qs-winner-confirm" class="btn btn-primary" onclick="qsPickWinner()">✅ 確認勝隊</button>
       </div>
 
       <!-- Phase 2: enter score -->
@@ -1241,14 +1250,10 @@ function qsUpdateLog(){
 function qsSelectWinner(side){
   const btnA = document.getElementById('qs-btn-a');
   const btnB = document.getElementById('qs-btn-b');
-  const confirmBtn = document.getElementById('qs-winner-confirm');
   btnA.classList.toggle('selected',  side==='a');
   btnA.classList.toggle('unselected', side==='b');
   btnB.classList.toggle('selected',  side==='b');
   btnB.classList.toggle('unselected', side==='a');
-  const winnerName = side==='a' ? qs.m.teamA : qs.m.teamB;
-  confirmBtn.textContent = `✅ 確認 ${winnerName} 獲勝`;
-  confirmBtn.style.display = 'block';
   qs._pendingSide = side;
 }
 
@@ -1257,8 +1262,6 @@ function qsWinnerConfirmReset(){
   const btnB = document.getElementById('qs-btn-b');
   if(btnA){ btnA.classList.remove('selected','unselected'); }
   if(btnB){ btnB.classList.remove('selected','unselected'); }
-  const confirmBtn = document.getElementById('qs-winner-confirm');
-  if(confirmBtn){ confirmBtn.style.display='none'; }
   qs._pendingSide = null;
 }
 
