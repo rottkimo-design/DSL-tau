@@ -1222,7 +1222,7 @@ function qsSelectWinner(side){
   btnB.classList.toggle('unselected', side==='a');
   const winnerName = side==='a' ? qs.m.teamA : qs.m.teamB;
   confirmBtn.textContent = `✅ 確認 ${winnerName} 獲勝`;
-  confirmBtn.style.display = '';
+  confirmBtn.style.display = 'block';
   qs._pendingSide = side;
 }
 
