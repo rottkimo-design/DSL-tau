@@ -422,6 +422,7 @@
     flex:1;padding:20px 12px 16px;border:3px solid #e0e0e0;
     border-radius:18px;background:#fff;cursor:pointer;
     transition:all .2s;text-align:center;
+    aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   }
   .qs-team-btn{position:relative;overflow:visible;}
   .qs-team-btn:active{transform:scale(.96);}
@@ -450,10 +451,10 @@
     from{transform:translateX(-50%) scale(1) translateY(0);}
     to{transform:translateX(-50%) scale(1.12) translateY(-4px);}
   }
-  .qs-tside{font-size:11px;font-weight:700;text-transform:uppercase;
-    letter-spacing:.5px;margin-bottom:8px;color:var(--muted);}
-  .qs-tname{font-size:15px;font-weight:800;line-height:1.45;word-break:break-word;}
-  .qs-tid{font-size:11px;color:var(--muted);margin-top:4px;}
+  .qs-tside{font-size:13px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.5px;margin-bottom:10px;color:var(--muted);}
+  .qs-tname{font-size:22px;font-weight:800;line-height:1.45;word-break:break-word;}
+  .qs-tid{display:none;}
 
   /* Score entry */
   .qs-score-title{
