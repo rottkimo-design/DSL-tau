@@ -2306,30 +2306,17 @@ function renderQrGrid() {
   grid.innerHTML = [1,2,3,4].map(n => {
     const url = `${window.location.origin}/c${n}`;
     const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=10&ecc=H&data=${encodeURIComponent(url)}`;
-    const courtChar = {1:'木', 2:'柵', 3:'高', 4:'工'}[n] || '';
+    // 根據場地 ID 決定中心字
+    const _venueChars = {
+      'MCVS_Court': {1:'木',2:'柵',3:'高',4:'工'},
+      'ZZHS_Court': {1:'中',2:'正',3:'高',4:'中'},
+    };
+    const courtChar = (_venueChars[window._ntcpaVenueId] || {1:'1',2:'2',3:'3',4:'4'})[n] || String(n);
 
-    // 收集該場地所有唯一選手名稱，依前綴編號排序（A11→A18, B21→B28…）
-    const players = [];
-    const seen = new Set();
-    scheduleMatches.filter(m => m.court === n).forEach(m => {
-      [m.playerA1, m.playerA2, m.playerB1, m.playerB2].forEach(p => {
-        if (p && !seen.has(p)) { seen.add(p); players.push(p); }
-      });
-    });
-    players.sort((a, b) => {
-      const key = s => { const m = s.match(/^([A-Za-z])(\d+)/); return m ? m[1].charCodeAt(0)*1000+parseInt(m[2]) : 9999; };
-      return key(a) - key(b);
-    });
+    const qrImg = `<a href="${url}" target="_blank" style="display:inline-block;flex-shrink:0"><div class="qr-img-wrap"><img class="qr-img" src="${qrSrc}" alt="場地 ${n} QR Code"><div class="qr-center-text">${courtChar}</div></div></a>`;
 
-    const playerListHtml = players.length
-      ? players.map(p => `<div class="qr-player">${esc(p)}</div>`).join('')
-      : `<div class="qr-no-players">尚無選手資料</div>`;
-
-    const qrImg   = `<a href="${url}" target="_blank" style="display:inline-block;flex-shrink:0"><div class="qr-img-wrap"><img class="qr-img" src="${qrSrc}" alt="場地 ${n} QR Code"><div class="qr-center-text">${courtChar}</div></div></a>`;
-    const pList   = `<div class="qr-players">${playerListHtml}</div>`;
-
-    // QR Code 在左，選手名單在右
-    const inner = `${qrImg}${pList}`;
+    // 選手名單已移除
+    const inner = qrImg;
 
     return `
       <div class="qr-card" data-court="${n}">
