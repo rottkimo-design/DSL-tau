@@ -474,11 +474,14 @@
   .qs-sb-score-row{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;}
   .qs-sb-qmark{font-size:36px;font-weight:900;color:#2196f3;margin-top:6px;line-height:1;}
   .qs-sb-colon{font-size:30px;font-weight:900;color:var(--muted);flex-shrink:0;}
-  .qs-lose-hint{display:flex;margin-top:6px;margin-bottom:8px;}
-  .qs-lose-hint-spacer{flex:1;min-width:0;}
-  .qs-lose-hint-content{flex:1;min-width:0;text-align:center;}
-  .qs-lose-arrow{font-size:22px;color:#2196f3;line-height:1;margin-bottom:2px;}
-  .qs-lose-label{font-size:13px;font-weight:700;color:#1565c0;}
+  .qs-loser-card{
+    border:3px solid #2196f3;border-radius:16px;background:#eef4ff;
+    padding:14px 16px;text-align:center;margin-bottom:14px;
+    animation:loser-pulse 1.2s ease-in-out infinite;
+  }
+  .qs-loser-card-role{font-size:12px;font-weight:700;color:#1565c0;margin-bottom:6px;letter-spacing:.5px;}
+  .qs-loser-card .qs-sb-name{font-size:17px;font-weight:800;color:#1565c0;min-height:unset;}
+  .qs-lose-label{font-size:15px;font-weight:800;color:#1565c0;text-align:center;margin-bottom:10px;}
 
   .qs-win-row{
     display:flex;align-items:center;justify-content:center;
@@ -828,37 +831,22 @@
       <div id="qs-phase-score" style="display:none">
         <div class="qs-score-title" id="qs-score-title">第 1 局比分</div>
 
-        <!-- 迷你計分板 -->
-        <div class="qs-scoreboard">
-          <div class="qs-sb-side qs-sb-winner">
-            <div class="qs-sb-role">🏆 勝方</div>
-            <div class="qs-sb-name" id="qs-sb-wname">—</div>
-            <div class="qs-sb-score-row">
-              <button class="qs-win-adj" onclick="qsAdjWin(-1)">−</button>
-              <div class="qs-win-num" id="qs-win-num">11</div>
-              <button class="qs-win-adj" onclick="qsAdjWin(+1)">+</button>
-            </div>
-          </div>
-          <div class="qs-sb-colon">:</div>
-          <div class="qs-sb-side qs-sb-loser">
-            <div class="qs-sb-role">敗方</div>
-            <div class="qs-sb-name" id="qs-sb-lname">—</div>
-            <div class="qs-sb-qmark">?</div>
-          </div>
+        <!-- 落敗隊伍卡片 -->
+        <div class="qs-loser-card">
+          <div class="qs-loser-card-role">落敗隊伍</div>
+          <div class="qs-sb-name" id="qs-sb-lname">—</div>
         </div>
 
-        <!-- 箭頭對齊敗方欄位 -->
-        <div class="qs-lose-hint">
-          <div class="qs-lose-hint-spacer"></div>
-          <div class="qs-lose-hint-content">
-            <div class="qs-lose-arrow">↑</div>
-            <div class="qs-lose-label">點選「<strong>敗方</strong>」分數</div>
-          </div>
+        <!-- 隱藏：保留供 JS 邏輯使用 -->
+        <div style="display:none">
+          <div id="qs-sb-wname"></div>
+          <div id="qs-win-num">11</div>
         </div>
 
+        <div class="qs-lose-label">點選落敗隊伍分數</div>
         <div class="qs-loser-grid" id="qs-loser-grid"></div>
         <div style="margin-top:10px;text-align:center;color:var(--muted);font-size:12px">
-          選擇敗方分數即自動進入下一步
+          選擇分數即自動進入下一步
         </div>
       </div>
 
