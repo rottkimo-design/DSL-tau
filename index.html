@@ -476,8 +476,8 @@
   .qs-sb-colon{font-size:30px;font-weight:900;color:var(--muted);flex-shrink:0;}
   .qs-loser-card{
     border:3px solid #e53e3e;border-radius:16px;background:#fff5f5;
-    text-align:center;margin:0 auto 14px;padding:14px 20px;
-    width:60%;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;margin:0 0 14px;padding:16px 12px 14px;
+    display:flex;flex-direction:column;align-items:center;gap:10px;
     animation:loser-pulse-red 1s ease-in-out infinite;
   }
   @keyframes loser-pulse-red{0%,100%{border-color:#e53e3e;box-shadow:0 0 0 0 rgba(229,62,62,0);}50%{border-color:#c53030;box-shadow:0 0 0 6px rgba(229,62,62,.25);}}
@@ -831,24 +831,18 @@
 
       <!-- Phase 2: enter score -->
       <div id="qs-phase-score" style="display:none">
-        <div class="qs-score-title" id="qs-score-title">第 1 局比分</div>
-
-        <!-- 落敗隊伍卡片 -->
-        <div class="qs-loser-card">
-          <div class="qs-loser-card-role">落敗隊伍</div>
-          <div class="qs-sb-name" id="qs-sb-lname">—</div>
-        </div>
-
         <!-- 隱藏：保留供 JS 邏輯使用 -->
         <div style="display:none">
+          <div id="qs-score-title"></div>
           <div id="qs-sb-wname"></div>
           <div id="qs-win-num">11</div>
         </div>
 
-        <div class="qs-lose-label">點選落敗隊伍分數</div>
-        <div class="qs-loser-grid" id="qs-loser-grid"></div>
-        <div style="margin-top:10px;text-align:center;color:var(--muted);font-size:12px">
-          選擇分數即自動進入下一步
+        <!-- 落敗隊伍卡片（含分數格）-->
+        <div class="qs-loser-card">
+          <div class="qs-loser-card-role">落敗隊伍</div>
+          <div class="qs-sb-name" id="qs-sb-lname">—</div>
+          <div class="qs-loser-grid" id="qs-loser-grid"></div>
         </div>
       </div>
 
