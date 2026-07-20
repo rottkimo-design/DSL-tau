@@ -2112,7 +2112,7 @@ async function printSchedule(courtFilter) {
 
   /* ── 標題 ── */
   c.fillStyle='#1b4332'; c.font='bold 24px sans-serif'; c.textAlign='center';
-  c.fillText('木柵高工 DUPR 場次表', CW/2, 32);
+  c.fillText(`${ntcpaVenueName} DUPR 場次表`, CW/2, 32);
   c.font='bold 16px sans-serif'; c.fillStyle='#333';
   c.fillText(new Date().toLocaleDateString('zh-TW'), CW/2, 54);
 
@@ -2632,6 +2632,7 @@ async function saveQrImage() {
   // 從 VENUE_ID 取得顯示名稱（取 _Court 前的部分）
   const VENUE_SHORT = VENUE_ID.replace(/_Court$/i, '');
   document.title = `${VENUE_SHORT} 分數登記`;
+  document.querySelector('.top-header h1').textContent = `🏓 ${VENUE_SHORT} 分數登記`;
   document.querySelector('h1').textContent = `🏓 ${VENUE_SHORT} 分數登記`;
 
   let ntcpaVenueName = VENUE_SHORT;
@@ -2731,7 +2732,11 @@ async function saveQrImage() {
     // 先讀取場地名稱
     db.ref(`ntcpa/venues/${VENUE_ID}/config`).once('value', snap => {
       const cfg = snap.val();
-      if (cfg && cfg.name) ntcpaVenueName = cfg.name;
+      if (cfg && cfg.name) {
+        ntcpaVenueName = cfg.name;
+        document.querySelector('.top-header h1').textContent = `🏓 ${cfg.name} 分數登記`;
+        document.title = `${cfg.name} 分數登記`;
+      }
     });
 
     // 暴露 db 供 submitScore() 寫回使用
