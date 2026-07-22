@@ -11,6 +11,7 @@
 <script>tailwind={config:{corePlugins:{preflight:false}}}</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Serif+TC:wght@600;800&display=swap');
   :root {
     --c1:#ef4444; --c2:#3b82f6; --c3:#22c55e; --c4:#f97316;
     --green:#22c55e; --green-dark:#16a34a;
@@ -18,6 +19,11 @@
     --red:#ef4444; --gray:#f1f5f9;
     --text:#1e293b; --muted:#64748b;
     --radius:16px; --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 12px rgba(0,0,0,.05);
+    /* ── Peacock / Art Nouveau home theme ── */
+    --pk-bg1:#0a3234; --pk-bg2:#0f4548; --pk-bg3:#186669;
+    --pk-gold:#d7b76a; --pk-gold-light:#f3dfa0; --pk-gold-dark:#a9813f;
+    --pk-cream:#f4ecd8;
+    --pk-font:'Noto Serif TC','Cinzel',serif;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
@@ -28,37 +34,51 @@
   }
   #app-root{width:100%;display:flex;flex-direction:column;align-items:center;}
 
-  /* ── Top bar ── */
+  /* ── Top bar (peacock / art nouveau) ── */
   .top-header{
-    width:100%;background:#fff;
-    box-shadow:0 1px 0 #e2e8f0,0 2px 8px rgba(0,0,0,.04);
-    padding:12px 16px 0;display:flex;flex-direction:column;align-items:center;
+    width:100%;
+    background:
+      radial-gradient(ellipse 140px 90px at 4% -20%, rgba(215,183,106,.16), transparent 70%),
+      radial-gradient(ellipse 140px 90px at 96% 120%, rgba(215,183,106,.16), transparent 70%),
+      linear-gradient(160deg, var(--pk-bg2), var(--pk-bg1) 60%, var(--pk-bg1));
+    box-shadow:0 4px 16px rgba(6,30,31,.35);
+    padding:14px 16px 12px;display:flex;flex-direction:column;align-items:center;
     position:sticky;top:0;z-index:20;
+    border-radius:0 0 22px 22px;
+    border-bottom:1px solid var(--pk-gold-dark);
   }
   .header-row{
     display:flex;align-items:center;justify-content:space-between;
-    width:100%;max-width:900px;margin-bottom:8px;
+    width:100%;max-width:900px;margin-bottom:10px;
   }
-  .top-header h1{font-size:21px;font-weight:700;letter-spacing:.2px;}
+  .top-header h1{
+    font-family:var(--pk-font);font-size:20px;font-weight:800;letter-spacing:.3px;
+    color:var(--pk-gold-light);text-shadow:0 1px 0 rgba(0,0,0,.35);
+  }
   .top-header p{display:none;}
   #fb-sync-badge{
     font-size:11px!important;font-weight:600;
     padding:3px 10px;border-radius:999px;
     transition:all 0.3s;
+    border:1px solid var(--pk-gold-dark);
   }
   .tab-bar{
     display:flex;width:100%;max-width:900px;
-    background:#f1f5f9;border-radius:12px;padding:3px;gap:3px;
-    margin-bottom:10px;border-bottom:none;
+    background:rgba(0,0,0,.18);border-radius:999px;padding:4px;gap:4px;
+    margin-bottom:2px;border-bottom:none;
+    border:1px solid rgba(215,183,106,.45);
   }
   .tab-btn{
-    flex:1;padding:8px;text-align:center;font-size:18px;font-weight:600;
-    color:var(--muted);background:transparent;border:none;cursor:pointer;
-    border-radius:9px;border-bottom:none;margin-bottom:0;transition:all .2s;
+    flex:1;padding:9px;text-align:center;font-size:17px;font-weight:700;
+    font-family:var(--pk-font);
+    color:var(--pk-gold-light);background:transparent;border:none;cursor:pointer;
+    border-radius:999px;border-bottom:none;margin-bottom:0;transition:all .2s;
+    opacity:.75;
   }
   .tab-btn.active{
-    color:var(--text);background:#fff;
-    box-shadow:0 1px 3px rgba(0,0,0,.12),0 1px 1px rgba(0,0,0,.06);
+    color:var(--pk-bg1);background:linear-gradient(160deg,var(--pk-gold-light),var(--pk-gold));
+    box-shadow:0 2px 8px rgba(0,0,0,.25);
+    opacity:1;
   }
 
   /* ── Pages ── */
@@ -69,57 +89,98 @@
   .sec{display:none;}
   .sec.active{display:block;}
 
-  /* ════════ HOME — Court tiles ════════ */
+  /* ════════ HOME — Court tiles (peacock / art nouveau) ════════ */
+  #sec-home{
+    background:
+      radial-gradient(ellipse 160px 110px at -6% -8%, rgba(215,183,106,.14), transparent 65%),
+      radial-gradient(ellipse 160px 130px at 106% 108%, rgba(215,183,106,.14), transparent 65%),
+      linear-gradient(165deg, var(--pk-bg2), var(--pk-bg1) 55%, var(--pk-bg1));
+    margin:-20px -16px 0;padding:20px 16px 24px;
+    border-radius:0 0 24px 24px;
+    box-shadow:0 6px 20px rgba(6,30,31,.3);
+  }
   .home-top{
     display:flex;justify-content:space-between;align-items:center;
-    margin-bottom:14px;
+    margin-bottom:14px;flex-wrap:wrap;gap:8px;
   }
-  .home-title{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.3px;text-transform:uppercase;}
+  .home-title{
+    font-family:var(--pk-font);font-size:15px;font-weight:700;
+    color:var(--pk-gold-light);letter-spacing:.5px;
+  }
   .import-btn{
     padding:6px 13px;border-radius:99px;
-    border:1.5px solid #e2e8f0;background:#fff;
-    color:var(--muted);font-size:12px;font-weight:600;
+    border:1.5px solid var(--pk-gold-dark);background:rgba(0,0,0,.15);
+    color:var(--pk-gold-light);font-size:12px;font-weight:600;
     cursor:pointer;transition:all .18s;
     display:inline-flex;align-items:center;gap:5px;
   }
-  .import-btn:hover{border-color:var(--blue);color:var(--blue);background:#eff6ff;}
+  .import-btn:hover{border-color:var(--pk-gold-light);background:rgba(0,0,0,.28);}
   .import-btn:active{transform:scale(.97);}
 
-  .court-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+  .court-grid{display:grid;grid-template-columns:1fr;gap:12px;}
   @media(min-width:600px){.court-grid{grid-template-columns:1fr 1fr;}}
 
   .court-tile{
-    border-radius:14px;background:#fff;box-shadow:var(--shadow);
+    border-radius:16px;
+    background:
+      radial-gradient(ellipse 70px 90px at 108% -10%, rgba(215,183,106,.18), transparent 60%),
+      linear-gradient(135deg, var(--pk-bg3), var(--pk-bg2) 70%);
+    box-shadow:0 3px 12px rgba(6,30,31,.35), inset 0 0 0 1px rgba(215,183,106,.5);
     padding:16px 16px;
     display:flex;flex-direction:row;align-items:center;gap:14px;
     cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;
-    border-left:4px solid #e2e8f0;min-height:76px;
+    min-height:76px;overflow:hidden;
+    border:1px solid var(--pk-gold-dark);
   }
-  .court-tile[data-court="1"]{border-left-color:var(--c1);}
-  .court-tile[data-court="2"]{border-left-color:var(--c2);}
-  .court-tile[data-court="3"]{border-left-color:var(--c3);}
-  .court-tile[data-court="4"]{border-left-color:var(--c4);}
-  .court-tile:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,.1);}
+  .court-tile::before{
+    content:'';position:absolute;inset:4px;border-radius:12px;
+    border:1px solid rgba(215,183,106,.35);pointer-events:none;
+  }
+  .court-tile::after{
+    content:'';position:absolute;top:-20px;right:-20px;width:80px;height:100px;
+    background:
+      radial-gradient(circle at 50% 45%, var(--pk-bg1) 0 10%, transparent 11%),
+      radial-gradient(circle at 50% 45%, var(--pk-gold) 10% 15%, transparent 16%),
+      radial-gradient(ellipse 26px 40px at 50% 48%, var(--pk-bg3) 0 60%, transparent 62%),
+      radial-gradient(ellipse 30px 46px at 50% 48%, transparent 0 58%, var(--pk-gold) 59% 63%, transparent 65%);
+    opacity:.4;transform:rotate(18deg);pointer-events:none;
+  }
+  .court-tile[data-court="1"] .ct-dot{background:var(--c1);}
+  .court-tile[data-court="2"] .ct-dot{background:var(--c2);}
+  .court-tile[data-court="3"] .ct-dot{background:var(--c3);}
+  .court-tile[data-court="4"] .ct-dot{background:var(--c4);}
+  .court-tile:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(6,30,31,.45), inset 0 0 0 1px rgba(215,183,106,.6);}
   .court-tile:active{transform:scale(.98);}
 
-  .ct-num{font-size:42px;font-weight:900;color:var(--text);line-height:1;width:50px;flex-shrink:0;text-align:center;}
-  .ct-info{flex:1;min-width:0;}
-  .ct-name{font-size:19px;font-weight:700;color:var(--text);margin-bottom:3px;}
+  .ct-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle;}
+  .ct-num{
+    font-family:'Cinzel',var(--pk-font);font-size:42px;font-weight:900;line-height:1;
+    width:50px;flex-shrink:0;text-align:center;position:relative;z-index:1;
+    color:var(--pk-gold-light);
+    text-shadow:0 0 10px rgba(215,183,106,.35),0 1px 0 rgba(0,0,0,.4);
+  }
+  .ct-info{flex:1;min-width:0;position:relative;z-index:1;}
+  .ct-name{font-family:var(--pk-font);font-size:19px;font-weight:700;color:var(--pk-cream);margin-bottom:4px;}
   .ct-badge{
     display:inline-block;
-    font-size:15px;font-weight:700;color:var(--green-dark);
-    background:#dcfce7;border-radius:99px;padding:2px 8px;margin-top:2px;
+    font-size:14px;font-weight:700;color:var(--pk-bg1);
+    background:linear-gradient(160deg,var(--pk-gold-light),var(--pk-gold));
+    border-radius:99px;padding:2px 9px;margin-top:2px;
   }
-  .ct-badge.done{color:var(--muted);background:var(--gray);}
-  .ct-no-data{font-size:15px;color:#f87171;font-weight:600;margin-top:2px;}
-  .ct-enter-hint{font-size:15px;font-weight:600;color:#cbd5e1;flex-shrink:0;white-space:nowrap;}
+  .ct-badge.done{color:var(--pk-gold-light);background:rgba(0,0,0,.25);border:1px solid var(--pk-gold-dark);}
+  .ct-no-data{font-size:14px;color:#f0a3a3;font-weight:600;margin-top:2px;}
+  .ct-enter-hint{
+    font-family:var(--pk-font);font-size:14px;font-weight:600;color:var(--pk-gold);
+    flex-shrink:0;white-space:nowrap;position:relative;z-index:1;
+  }
 
   .no-schedule-hint{
-    background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
+    background:rgba(0,0,0,.18);border-radius:var(--radius);
+    border:1px solid var(--pk-gold-dark);
     padding:24px;text-align:center;margin-top:8px;
   }
   .no-schedule-hint .icon{font-size:36px;margin-bottom:8px;}
-  .no-schedule-hint p{color:var(--muted);font-size:13px;line-height:1.6;}
+  .no-schedule-hint p{color:var(--pk-gold-light);font-size:13px;line-height:1.6;}
 
   /* ════════ COURT LIST ════════ */
   .cl-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
@@ -721,7 +782,7 @@
       <div class="court-tile" data-court="1" onclick="selectCourtTile(1)">
         <div class="ct-num">1</div>
         <div class="ct-info">
-          <div class="ct-name">場地 1</div>
+          <div class="ct-name"><span class="ct-dot"></span>場地 1</div>
           <div class="ct-no-data" id="ct-hint-1">未載入賽程</div>
           <div class="ct-badge" id="ct-badge-1" style="display:none">0</div>
         </div>
@@ -730,7 +791,7 @@
       <div class="court-tile" data-court="2" onclick="selectCourtTile(2)">
         <div class="ct-num">2</div>
         <div class="ct-info">
-          <div class="ct-name">場地 2</div>
+          <div class="ct-name"><span class="ct-dot"></span>場地 2</div>
           <div class="ct-no-data" id="ct-hint-2">未載入賽程</div>
           <div class="ct-badge" id="ct-badge-2" style="display:none">0</div>
         </div>
@@ -739,7 +800,7 @@
       <div class="court-tile" data-court="3" onclick="selectCourtTile(3)">
         <div class="ct-num">3</div>
         <div class="ct-info">
-          <div class="ct-name">場地 3</div>
+          <div class="ct-name"><span class="ct-dot"></span>場地 3</div>
           <div class="ct-no-data" id="ct-hint-3">未載入賽程</div>
           <div class="ct-badge" id="ct-badge-3" style="display:none">0</div>
         </div>
@@ -748,7 +809,7 @@
       <div class="court-tile" data-court="4" onclick="selectCourtTile(4)">
         <div class="ct-num">4</div>
         <div class="ct-info">
-          <div class="ct-name">場地 4</div>
+          <div class="ct-name"><span class="ct-dot"></span>場地 4</div>
           <div class="ct-no-data" id="ct-hint-4">未載入賽程</div>
           <div class="ct-badge" id="ct-badge-4" style="display:none">0</div>
         </div>
