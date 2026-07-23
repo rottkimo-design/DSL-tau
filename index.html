@@ -359,6 +359,7 @@
   }
   .winner-label{font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px;}
   .winner-name{font-size:36px;font-weight:800;}
+  .winner-name div+div{margin-top:2px;}
 
   /* success */
   .success-icon{font-size:60px;text-align:center;margin:8px 0;}
@@ -373,6 +374,8 @@
   .btn-primary{background:linear-gradient(160deg,var(--pk-gold-light),var(--pk-gold));color:var(--pk-bg1);}
   .btn-primary:disabled{background:#cbd5e1;cursor:not-allowed;}
   .btn-secondary{background:var(--pk-parchment);color:var(--pk-ink);border:1px solid var(--pk-line-soft);}
+  .qs-confirm-actions{display:flex;gap:12px;margin-top:10px;}
+  .qs-confirm-actions .btn{width:auto;flex:1;margin-top:0;padding:22px 8px;border-radius:16px;font-size:16px;}
   .btn-blue{background:var(--blue);color:#fff;}
 
   /* ════════ VIEW PAGE ════════ */
@@ -1024,7 +1027,6 @@
       <!-- Phase 3: confirm -->
       <div id="qs-phase-confirm" style="display:none">
         <div class="qs-pick-title">比賽結果確認</div>
-        <div class="summary" id="qs-confirm-games"></div>
         <div class="qs-series" id="qs-series">
           <span class="score-a">0</span> : <span class="score-b">0</span>
         </div>
@@ -1032,8 +1034,10 @@
           <div class="winner-label">🏆 獲勝隊伍</div>
           <div class="winner-name" id="qs-confirm-winner">—</div>
         </div>
-        <button class="btn btn-primary" onclick="qsConfirm()">✅ 確認</button>
-        <button class="btn btn-secondary" onclick="qsReset()" style="margin-top:8px">🔄 重新輸入</button>
+        <div class="qs-confirm-actions">
+          <button class="btn btn-primary" onclick="qsConfirm()">✅ 確認</button>
+          <button class="btn btn-secondary" onclick="qsReset()">🔄 重新輸入</button>
+        </div>
       </div>
 
     </div>
@@ -1487,16 +1491,15 @@ function qsBuildConfirm(aWins, bWins){
   const sa = g.side==='a' ? g.win : g.lose;
   const sb = g.side==='b' ? g.win : g.lose;
 
-  // 移除「比分 11:8」那行，大比分已足夠
-  document.getElementById('qs-confirm-games').innerHTML = '';
-
   // Big score
   document.getElementById('qs-series').innerHTML =
     `<span class="score-a">${sa}</span> : <span class="score-b">${sb}</span>`;
 
-  // 獲勝隊伍：去掉前綴數字
+  // 獲勝隊伍：去掉前綴數字，隊員姓名各自一行、置中顯示
   const winnerTeam = g.side==='a' ? m.teamA : m.teamB;
-  document.getElementById('qs-confirm-winner').textContent = displayTeam(winnerTeam);
+  const winnerNames = (winnerTeam||'').split(' / ').map(stripPrefix);
+  document.getElementById('qs-confirm-winner').innerHTML =
+    winnerNames.map(n => `<div>${esc(n)}</div>`).join('');
 }
 
 /* ── Phone simulator toggle ── */
