@@ -2204,7 +2204,7 @@ async function printSchedule(courtFilter) {
 
   /* ── 標題 ── */
   c.fillStyle='#1b4332'; c.font='bold 24px sans-serif'; c.textAlign='center';
-  c.fillText(`${ntcpaVenueName} DUPR 場次表`, CW/2, 32);
+  c.fillText(`${window._ntcpaVenueName||'DSL'} DUPR 場次表`, CW/2, 32);
   c.font='bold 16px sans-serif'; c.fillStyle='#333';
   c.fillText(new Date().toLocaleDateString('zh-TW'), CW/2, 54);
 
