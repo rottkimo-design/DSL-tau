@@ -2875,9 +2875,14 @@ async function saveQrImage() {
         badgeOnline(converted.length);
         _handleUrlCourt();
         if (window._autoQr) renderQrGrid();
-        // 更新提示文字
+        // 更新提示文字：尚無對戰表時，顯示選手已就緒人數（選手資料由 NTCPA 端即時同步）
         const hint = document.getElementById('no-schedule-text');
-        if (hint) hint.textContent = `已連線 ${ntcpaVenueName}，即時同步中`;
+        if (hint) {
+          const playerCount = toArr(data.players).length;
+          hint.textContent = converted.length === 0 && playerCount > 0
+            ? `已連線 ${ntcpaVenueName}，目前已有 ${playerCount} 位選手完成登錄，等待對戰表產生中…`
+            : `已連線 ${ntcpaVenueName}，即時同步中`;
+        }
       },
       err => {
         console.warn('Firebase sync error:', err);
