@@ -2134,31 +2134,37 @@ function renderViewTab() {
     </table>`;
 }
 
-/* ── 場次表場地選擇器 ── */
+/* ── 場次表場地選擇器（孔雀深色主題）── */
 function showSchedulePicker() {
   const ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99998;display:flex;align-items:center;justify-content:center;';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99998;display:flex;align-items:center;justify-content:center;';
 
   const box = document.createElement('div');
-  box.style.cssText = 'background:#fff;border-radius:20px;padding:24px 20px;width:280px;display:flex;flex-direction:column;gap:10px;';
+  box.style.cssText = [
+    'background:linear-gradient(165deg, var(--pk-bg2), var(--pk-bg1) 55%, var(--pk-bg1));',
+    'border:1px solid var(--pk-gold-dark);box-shadow:0 10px 40px rgba(6,30,31,.5), inset 0 0 0 1px rgba(215,183,106,.25);',
+    'border-radius:20px;padding:24px 20px;width:280px;display:flex;flex-direction:column;gap:10px;',
+  ].join('');
 
   const title = document.createElement('div');
   title.textContent = '選擇場地';
-  title.style.cssText = 'font-size:18px;font-weight:800;text-align:center;margin-bottom:4px;';
+  title.style.cssText = 'font-family:var(--pk-font);font-size:18px;font-weight:800;text-align:center;margin-bottom:4px;color:var(--pk-gold-light);text-shadow:0 1px 0 rgba(0,0,0,.35);';
   box.appendChild(title);
 
   const clrs = {1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22'};
   [1,2,3,4].forEach(c => {
     const btn = document.createElement('button');
     btn.textContent = `場地 ${c}`;
-    btn.style.cssText = `padding:14px;border-radius:12px;border:3px solid ${clrs[c]};background:#fff;font-size:16px;font-weight:700;cursor:pointer;color:${clrs[c]};`;
+    btn.style.cssText = `padding:14px;border-radius:12px;border:2px solid ${clrs[c]};background:rgba(0,0,0,.22);font-size:16px;font-weight:700;cursor:pointer;color:${clrs[c]};transition:background .15s;`;
+    btn.onmouseenter = () => btn.style.background = 'rgba(0,0,0,.4)';
+    btn.onmouseleave = () => btn.style.background = 'rgba(0,0,0,.22)';
     btn.onclick = () => { document.body.removeChild(ov); printSchedule(c); };
     box.appendChild(btn);
   });
 
   const cancelBtn = document.createElement('button');
   cancelBtn.textContent = '取消';
-  cancelBtn.style.cssText = 'padding:12px;border-radius:12px;border:none;background:#f0f0f0;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;';
+  cancelBtn.style.cssText = 'padding:12px;border-radius:12px;border:1px solid var(--pk-gold-dark);background:rgba(0,0,0,.15);color:var(--pk-gold-light);font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;';
   cancelBtn.onclick = () => document.body.removeChild(ov);
   box.appendChild(cancelBtn);
 
