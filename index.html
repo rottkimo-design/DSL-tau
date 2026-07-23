@@ -56,6 +56,11 @@
   .top-header h1{
     font-family:var(--pk-font);font-size:20px;font-weight:800;letter-spacing:.3px;
     color:var(--pk-gold-light);text-shadow:0 1px 0 rgba(0,0,0,.35);
+    display:flex;align-items:center;gap:10px;
+  }
+  .app-icon{
+    width:44px;height:44px;flex-shrink:0;border-radius:50%;
+    box-shadow:0 0 0 2px var(--pk-gold-dark),0 2px 8px rgba(6,30,31,.5);
   }
   .top-header p{display:none;}
   #fb-sync-badge{
@@ -779,7 +784,7 @@
 <div id="phone-notch" style="display:none"></div>
 <div class="top-header">
   <div class="header-row">
-    <h1>🏓 MCVS 分數登記</h1>
+    <h1><img src="/icon-paddle.png" class="app-icon" alt=""><span id="app-title-text">MCVS 分數登記</span></h1>
     <div id="fb-sync-badge" style="display:none;font-size:18px;font-weight:600;padding:3px 10px;border-radius:999px;transition:all 0.3s;"></div>
   </div>
   <div class="tab-bar">
@@ -2698,8 +2703,7 @@ async function saveQrImage() {
   // 從 VENUE_ID 取得顯示名稱（取 _Court 前的部分）
   const VENUE_SHORT = VENUE_ID.replace(/_Court$/i, '');
   document.title = `${VENUE_SHORT} 分數登記`;
-  document.querySelector('.top-header h1').textContent = `🏓 ${VENUE_SHORT} 分數登記`;
-  document.querySelector('h1').textContent = `🏓 ${VENUE_SHORT} 分數登記`;
+  document.getElementById('app-title-text').textContent = `${VENUE_SHORT} 分數登記`;
 
   let ntcpaVenueName = VENUE_SHORT;
   window._ntcpaVenueName = VENUE_SHORT;  // 暴露供 printSchedule 等全域函式使用
@@ -2802,7 +2806,7 @@ async function saveQrImage() {
       if (cfg && cfg.name) {
         ntcpaVenueName = cfg.name;
         window._ntcpaVenueName = cfg.name;
-        document.querySelector('.top-header h1').textContent = `🏓 ${cfg.name} 分數登記`;
+        document.getElementById('app-title-text').textContent = `${cfg.name} 分數登記`;
         document.title = `${cfg.name} 分數登記`;
       }
     });
