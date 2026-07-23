@@ -184,7 +184,23 @@
   .no-schedule-hint .icon{font-size:36px;margin-bottom:8px;}
   .no-schedule-hint p{color:var(--pk-gold-light);font-size:13px;line-height:1.6;}
 
-  /* ════════ COURT LIST ════════ */
+  /* ════════ COURT LIST — 沿用首頁孔雀深色背景風格 ════════ */
+  #sec-court-list{
+    background:
+      radial-gradient(ellipse 160px 110px at -6% -8%, rgba(215,183,106,.14), transparent 65%),
+      radial-gradient(ellipse 160px 130px at 106% 108%, rgba(215,183,106,.14), transparent 65%),
+      linear-gradient(165deg, var(--pk-bg2), var(--pk-bg1) 55%, var(--pk-bg1));
+    margin:-20px -16px 0;padding:20px 16px 24px;
+    border-radius:0 0 24px 24px;
+    box-shadow:0 6px 20px rgba(6,30,31,.3);
+  }
+  #sec-court-list .back-btn{
+    border:1.5px solid var(--pk-gold-dark);background:rgba(0,0,0,.15);color:var(--pk-gold-light);
+  }
+  #sec-court-list .back-btn:hover{border-color:var(--pk-gold-light);background:rgba(0,0,0,.28);}
+  #sec-court-list .cl-title{text-shadow:0 1px 0 rgba(0,0,0,.35);}
+  #sec-court-list .cl-sub{color:var(--pk-gold-light);opacity:.85;}
+
   .cl-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
   .back-btn{
     width:36px;height:36px;border-radius:50%;
@@ -1204,7 +1220,7 @@ function showCourtList(n, matches) {
     .filter(({ m }) => !m._scored && !m._locked);
   list.innerHTML = visibleWithIdx.length
     ? visibleWithIdx.map(({ m, i }) => renderMatchItem(m, i)).join('')
-    : `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px">🎉 所有場次已完成</div>`;
+    : `<div style="text-align:center;padding:40px 20px;color:var(--pk-gold-light);font-size:14px">🎉 所有場次已完成</div>`;
   showSec('court-list');
 }
 
