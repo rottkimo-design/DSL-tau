@@ -2902,7 +2902,7 @@ async function saveQrImage() {
   };
 
   // 可透過 URL 參數 ?v=XXX 切換場地，預設為 MCVS_Court
-  const VENUE_ID = new URLSearchParams(window.location.search).get('v') || 'MCVS_Court';
+  let VENUE_ID = new URLSearchParams(window.location.search).get('v') || 'MCVS_Court';
   window._ntcpaVenueId = VENUE_ID;   // 暴露供 submitScore 使用
 
   // 從 VENUE_ID 取得顯示名稱（取 _Court 前的部分）
@@ -3027,6 +3027,36 @@ async function saveQrImage() {
         dslLog(`❌ 匿名登入失敗 code=${err.code} msg=${err.message}`);
       });
 
+    // 暴露 db 供 submitScore() 寫回使用
+    window._fbDb = db;
+
+    // ── 場地 ID 不分大小寫校正 ──
+    // Firebase 路徑大小寫敏感，若網址/QR code 的 ?v= 大小寫跟資料庫實際節點不同，
+    // 會整個讀到空路徑（畫面顯示連線中斷但其實只是路徑打錯）。這裡先查一次現有場地清單校正。
+    db.ref('ntcpa/venues').once('value', venuesSnap => {
+      const venues = venuesSnap.val() || {};
+      const keys = Object.keys(venues);
+      if (!keys.includes(VENUE_ID)) {
+        const ciMatch = keys.find(k => k.toLowerCase() === VENUE_ID.toLowerCase());
+        if (ciMatch) {
+          dslLog(`⚠️ 場地大小寫不符，網址帶的是「${VENUE_ID}」，已自動校正為「${ciMatch}」`);
+          VENUE_ID = ciMatch;
+          window._ntcpaVenueId = VENUE_ID;
+        } else {
+          dslLog(`❌ 找不到符合「${VENUE_ID}」的場地（不分大小寫），資料庫現有場地：${keys.join('、') || '(無)'}`);
+        }
+      }
+      attachVenueListeners(db);
+    }, err => {
+      dslLog(`❌ 場地清單讀取失敗 code=${err.code} msg=${err.message}，改用原始 VENUE_ID 繼續嘗試`);
+      attachVenueListeners(db);
+    });
+  } catch(e) {
+    console.warn('Firebase init failed:', e);
+    dslLog(`❌ Firebase 初始化整個失敗：${e.message}`);
+  }
+
+  function attachVenueListeners(db) {
     // 先讀取場地名稱
     db.ref(`ntcpa/venues/${VENUE_ID}/config`).once('value', snap => {
       const cfg = snap.val();
@@ -3038,9 +3068,6 @@ async function saveQrImage() {
         document.title = `${cfg.name} 分數登記`;
       }
     }, err => dslLog(`❌ config 讀取失敗 code=${err.code} msg=${err.message}`));
-
-    // 暴露 db 供 submitScore() 寫回使用
-    window._fbDb = db;
 
     // ── 監聽 NTCPA 廣播通知 ──
     window._notifyRef = db.ref(`ntcpa/venues/${VENUE_ID}/notify`);
@@ -3148,10 +3175,6 @@ async function saveQrImage() {
       if (!connected) badgeOffline();
       else badgeOnline(scheduleMatches.length);
     });
-
-  } catch(e) {
-    console.warn('Firebase init failed:', e);
-    dslLog(`❌ Firebase 初始化整個失敗：${e.message}`);
   }
 })();
 </script>
