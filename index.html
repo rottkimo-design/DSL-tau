@@ -1469,6 +1469,7 @@ function switchTab(tab) {
     document.getElementById('tab-'+t).classList.toggle('active', t===tab);
   });
   if (tab==='view' && !viewMatches.length) autoLoadView();
+  if (tab==='record' && isHomeSecActive()) flushOverallProgress();
 }
 
 /* ── 連續點擊「成績」4 次切換簡易模式（只顯示 名字 + DUPR Score）── */
@@ -1491,6 +1492,7 @@ function showSec(id) {
   document.querySelectorAll('#page-record .sec').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-'+id).classList.add('active');
   if (id === 'qr') renderQrGrid();
+  if (id === 'home') flushOverallProgress();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -2215,7 +2217,33 @@ function copyResult(){
    SCHEDULE CSV LOADING (for home page badges)
 ═══════════════════════════════════════════ */
 
-let _opLastDone = null;
+let _opLastAnimatedDone = null;
+let _opPending = null;
+
+function isHomeSecActive(){
+  const page = document.getElementById('page-record');
+  const sec = document.getElementById('sec-home');
+  return !!(page && sec && page.classList.contains('active') && sec.classList.contains('active'));
+}
+
+function flushOverallProgress(){
+  if (!_opPending) return;
+  const opWrap = document.getElementById('overall-progress');
+  if (!opWrap) return;
+  const {total, done, pending, pct} = _opPending;
+  if (!total) { opWrap.style.display = 'none'; _opLastAnimatedDone = null; return; }
+  opWrap.style.display = '';
+  document.getElementById('op-pct').textContent = pct + '%';
+  document.getElementById('op-done').textContent = done;
+  document.getElementById('op-total').textContent = total;
+  document.getElementById('op-pending').textContent = pending;
+  if (_opLastAnimatedDone !== null && done > _opLastAnimatedDone) {
+    rollOpBallTo(pct);
+  } else {
+    document.getElementById('op-fill').style.width = pct + '%';
+  }
+  _opLastAnimatedDone = done;
+}
 
 function rollOpBallTo(pct){
   const ball = document.getElementById('op-ball');
@@ -2265,28 +2293,14 @@ function updateHomeBadges(){
   });
   hint.style.display=hasAny?'none':'';
 
-  const opWrap = document.getElementById('overall-progress');
-  if (opWrap) {
-    const total = scheduleMatches.length;
-    if (total > 0) {
-      const done = scheduleMatches.filter(m=>m._scored).length;
-      const pending = total - done;
-      const pct = Math.round(done / total * 100);
-      opWrap.style.display = '';
-      document.getElementById('op-pct').textContent = pct + '%';
-      document.getElementById('op-done').textContent = done;
-      document.getElementById('op-total').textContent = total;
-      document.getElementById('op-pending').textContent = pending;
-      if (_opLastDone !== null && done > _opLastDone) {
-        rollOpBallTo(pct);
-      } else {
-        document.getElementById('op-fill').style.width = pct + '%';
-      }
-      _opLastDone = done;
-    } else {
-      opWrap.style.display = 'none';
-    }
+  const total = scheduleMatches.length;
+  if (total > 0) {
+    const done = scheduleMatches.filter(m=>m._scored).length;
+    _opPending = {total, done, pending: total-done, pct: Math.round(done/total*100)};
+  } else {
+    _opPending = {total: 0};
   }
+  if (isHomeSecActive()) flushOverallProgress();
 }
 
 /* ═══════════════════════════════════════════
