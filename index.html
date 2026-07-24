@@ -222,6 +222,47 @@
   #sec-court-list .cl-title{text-shadow:0 1px 0 rgba(0,0,0,.35);}
   #sec-court-list .cl-sub{color:var(--pk-gold-light);opacity:.85;}
 
+  /* ════════ QR CODE 頁面 — 沿用孔雀深色背景風格 ════════ */
+  #sec-qr{
+    background:
+      radial-gradient(ellipse 160px 110px at -6% -8%, rgba(215,183,106,.14), transparent 65%),
+      radial-gradient(ellipse 160px 130px at 106% 108%, rgba(215,183,106,.14), transparent 65%),
+      linear-gradient(165deg, var(--pk-bg2), var(--pk-bg1) 55%, var(--pk-bg1));
+    margin:-20px -16px 0;padding:20px 16px 24px;
+    border-radius:0 0 24px 24px;
+    box-shadow:0 6px 20px rgba(6,30,31,.3);
+  }
+  #sec-qr .back-btn{
+    border:1.5px solid var(--pk-gold-dark);background:rgba(0,0,0,.15);color:var(--pk-gold-light);
+  }
+  #sec-qr .back-btn:hover{border-color:var(--pk-gold-light);background:rgba(0,0,0,.28);}
+  #sec-qr .cl-title{color:var(--pk-gold-light);text-shadow:0 1px 0 rgba(0,0,0,.35);}
+  #sec-qr .ct-btn{border-color:var(--pk-gold-dark);background:rgba(0,0,0,.15);color:var(--pk-gold-light);}
+  #sec-qr .ct-btn.active{background:linear-gradient(160deg,var(--pk-gold-light),var(--pk-gold));color:var(--pk-bg1);border-color:var(--pk-gold-dark);}
+  #sec-qr .qr-card{
+    background:rgba(0,0,0,.18);border:1px solid var(--pk-gold-dark);
+    box-shadow:inset 0 0 0 1px rgba(215,183,106,.25);
+  }
+  #sec-qr .qr-back-btn{
+    border:1px solid var(--pk-gold-dark);background:rgba(0,0,0,.15);color:var(--pk-gold-light);
+  }
+
+  /* ════════ 成績排名頁面 — 沿用孔雀深色背景風格 ════════ */
+  #page-view{
+    background:
+      radial-gradient(ellipse 160px 110px at -6% -8%, rgba(215,183,106,.14), transparent 65%),
+      radial-gradient(ellipse 160px 130px at 106% 108%, rgba(215,183,106,.14), transparent 65%),
+      linear-gradient(165deg, var(--pk-bg2), var(--pk-bg1) 55%, var(--pk-bg1));
+    margin:-20px -16px 0;padding:20px 16px 24px;
+    border-radius:0 0 24px 24px;
+    box-shadow:0 6px 20px rgba(6,30,31,.3);
+  }
+  #page-view .rk-court-btn{border-color:var(--pk-gold-dark);background:rgba(0,0,0,.15);color:var(--pk-gold-light);}
+  #page-view .rk-court-btn.active{background:linear-gradient(160deg,var(--pk-gold-light),var(--pk-gold));color:var(--pk-bg1);border-color:var(--pk-gold-dark);}
+  #page-view .rk-table{background:rgba(0,0,0,.18);border:1px solid var(--pk-gold-dark);box-shadow:inset 0 0 0 1px rgba(215,183,106,.25);}
+  #page-view .rk-table th{background:rgba(0,0,0,.2);color:var(--pk-gold-light);border-bottom:1px solid var(--pk-line-soft);}
+  #page-view .rk-table td{color:var(--pk-cream);border-bottom:1px solid rgba(215,183,106,.2);}
+
   .cl-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
   .back-btn{
     width:36px;height:36px;border-radius:50%;
