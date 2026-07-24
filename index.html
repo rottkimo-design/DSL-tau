@@ -114,6 +114,10 @@
     font-family:var(--pk-font);font-size:15px;font-weight:700;
     color:var(--pk-gold-light);letter-spacing:.5px;
   }
+  @media(min-width:600px){
+    .home-title{cursor:pointer;user-select:none;}
+    .home-title:active{opacity:.7;}
+  }
   .import-btn{
     padding:6px 13px;border-radius:99px;
     border:1.5px solid var(--pk-gold-dark);background:rgba(0,0,0,.15);
@@ -129,17 +133,6 @@
     .court-grid{grid-template-columns:1fr 1fr;}
     .court-grid.cg-cols-3{grid-template-columns:repeat(3,1fr);}
     .court-grid.cg-cols-4{grid-template-columns:repeat(4,1fr);}
-  }
-  .court-cols-toggle{display:none;gap:6px;}
-  @media(min-width:600px){.court-cols-toggle{display:flex;}}
-  .court-col-btn{
-    padding:6px 12px;border-radius:99px;border:1.5px solid var(--pk-gold-dark);
-    background:rgba(0,0,0,.15);color:var(--pk-gold-light);font-size:12px;font-weight:600;
-    cursor:pointer;transition:all .18s;
-  }
-  .court-col-btn.active{
-    background:linear-gradient(160deg,var(--pk-gold-light),var(--pk-gold));
-    color:var(--pk-bg1);border-color:var(--pk-gold-dark);
   }
 
   .court-tile{
@@ -911,13 +904,8 @@
   <!-- ── SEC A: Home (court tiles) ── -->
   <div class="sec active" id="sec-home">
     <div class="home-top">
-      <div class="home-title">選擇場地</div>
+      <div class="home-title" id="home-title-toggle" onclick="cycleCourtCols()" title="點擊切換欄數">選擇場地</div>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-        <div class="court-cols-toggle">
-          <button class="court-col-btn active" id="court-cols-2-btn" onclick="setCourtCols(2)">2 欄</button>
-          <button class="court-col-btn" id="court-cols-3-btn" onclick="setCourtCols(3)">3 欄</button>
-          <button class="court-col-btn" id="court-cols-4-btn" onclick="setCourtCols(4)">4 欄</button>
-        </div>
         <button class="import-btn" id="schedule-save-btn" onclick="showSchedulePicker()">📸 場次表</button>
         <button class="import-btn" onclick="showSec('qr')">📋 QR Code</button>
       </div>
@@ -2629,13 +2617,16 @@ function setQrCols(n){
   document.getElementById('qr-cols-2-btn').classList.toggle('active', n===2);
 }
 
+let _courtCols = 2;
 function setCourtCols(n){
+  _courtCols = n;
   const grid = document.querySelector('.court-grid');
   grid.classList.toggle('cg-cols-3', n===3);
   grid.classList.toggle('cg-cols-4', n===4);
-  [2,3,4].forEach(c=>{
-    document.getElementById('court-cols-'+c+'-btn').classList.toggle('active', c===n);
-  });
+}
+function cycleCourtCols(){
+  if(window.innerWidth < 600) return;
+  setCourtCols(_courtCols===4 ? 2 : _courtCols+1);
 }
 
 /* ═══════════════════════════════════════
