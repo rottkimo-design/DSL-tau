@@ -931,13 +931,15 @@
 <div class="top-header">
   <div class="header-row">
     <h1><img src="/icon-paddle.png" class="app-icon" alt=""><span id="app-title-text">MCVS 分數登記</span></h1>
-    <div id="fb-sync-badge" style="display:none;font-size:18px;font-weight:600;padding:3px 10px;border-radius:999px;transition:all 0.3s;"></div>
+    <div id="fb-sync-badge" onclick="toggleDslDebug()" style="display:none;font-size:18px;font-weight:600;padding:3px 10px;border-radius:999px;transition:all 0.3s;cursor:pointer;"></div>
   </div>
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-record" onclick="switchTab('record')">📝 登記</button>
     <button class="tab-btn"        id="tab-view"   onclick="switchTab('view')">📊 成績</button>
   </div>
 </div>
+
+<pre id="dsl-debug-panel" style="display:none;position:fixed;top:8px;left:8px;right:8px;max-height:70vh;overflow:auto;z-index:9999;background:rgba(0,0,0,.92);color:#7CFC7C;font-size:11px;line-height:1.5;padding:10px;border-radius:10px;white-space:pre-wrap;word-break:break-all;"></pre>
 
 <!-- ══════════ PAGE: 登記 ══════════ -->
 <div class="page active" id="page-record">
@@ -2991,6 +2993,25 @@ async function saveQrImage() {
       });
   }
 
+  // ── 除錯記錄（點兩下右上角同步徽章可查看，不需接電腦偵錯）──
+  window._dslDebugLog = [];
+  function dslLog(msg) {
+    const line = `[${new Date().toLocaleTimeString('zh-TW',{hour12:false})}] ${msg}`;
+    window._dslDebugLog.push(line);
+    if (window._dslDebugLog.length > 80) window._dslDebugLog.shift();
+    const panel = document.getElementById('dsl-debug-panel');
+    if (panel && panel.style.display !== 'none') panel.textContent = window._dslDebugLog.join('\n');
+  }
+  window.toggleDslDebug = function(){
+    const panel = document.getElementById('dsl-debug-panel');
+    if (!panel) return;
+    const show = panel.style.display === 'none';
+    panel.style.display = show ? 'block' : 'none';
+    if (show) panel.textContent = window._dslDebugLog.join('\n') || '(尚無記錄)';
+  };
+  dslLog(`裝置：${navigator.userAgent}`);
+  dslLog(`場地 VENUE_ID=${VENUE_ID}`);
+
   // ── 初始化 Firebase ────────────────────────────────────────
   try {
     firebase.initializeApp(firebaseConfig);
@@ -2999,20 +3020,24 @@ async function saveQrImage() {
     badgeConnecting();
 
     // 匿名登入（讓 Firebase Security Rules 可以做 auth != null 驗證）
-    firebase.auth().signInAnonymously().catch(err => {
-      console.warn('Firebase anonymous auth failed:', err);
-    });
+    firebase.auth().signInAnonymously()
+      .then(cred => dslLog(`✅ 匿名登入成功 uid=${cred.user.uid}`))
+      .catch(err => {
+        console.warn('Firebase anonymous auth failed:', err);
+        dslLog(`❌ 匿名登入失敗 code=${err.code} msg=${err.message}`);
+      });
 
     // 先讀取場地名稱
     db.ref(`ntcpa/venues/${VENUE_ID}/config`).once('value', snap => {
       const cfg = snap.val();
+      dslLog(`config 讀取完成，有資料=${!!cfg}`);
       if (cfg && cfg.name) {
         ntcpaVenueName = cfg.name;
         window._ntcpaVenueName = cfg.name;
         document.getElementById('app-title-text').textContent = `${cfg.name} 分數登記`;
         document.title = `${cfg.name} 分數登記`;
       }
-    });
+    }, err => dslLog(`❌ config 讀取失敗 code=${err.code} msg=${err.message}`));
 
     // 暴露 db 供 submitScore() 寫回使用
     window._fbDb = db;
@@ -3049,7 +3074,8 @@ async function saveQrImage() {
     db.ref(`ntcpa/venues/${VENUE_ID}/data`).on('value',
       snap => {
         const data = snap.val();
-        if (!data) { badgeOffline(); return; }
+        if (!data) { dslLog('❌ data 監聽觸發但 snap.val() 是 null（路徑可能無資料）'); badgeOffline(); return; }
+        dslLog(`✅ data 監聽觸發，matches=${toArr(data.matches).length} players=${toArr(data.players).length}`);
 
         // 建立 ntcpaId → firebase array index 索引表
         const rawMatches = toArr(data.matches);
@@ -3110,17 +3136,22 @@ async function saveQrImage() {
       },
       err => {
         console.warn('Firebase sync error:', err);
+        dslLog(`❌ data 監聽錯誤 code=${err.code} msg=${err.message}`);
         badgeOffline();
       }
     );
 
     // 連線狀態監測
     db.ref('.info/connected').on('value', snap => {
-      if (!snap.val()) badgeOffline();
+      const connected = !!snap.val();
+      dslLog(`.info/connected = ${connected}`);
+      if (!connected) badgeOffline();
+      else badgeOnline(scheduleMatches.length);
     });
 
   } catch(e) {
     console.warn('Firebase init failed:', e);
+    dslLog(`❌ Firebase 初始化整個失敗：${e.message}`);
   }
 })();
 </script>
