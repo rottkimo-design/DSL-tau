@@ -215,12 +215,34 @@
   .op-pct{font-family:'Cinzel',var(--pk-font);font-size:20px;font-weight:900;color:var(--pk-gold-light);}
   .op-track{
     width:100%;height:14px;border-radius:99px;background:rgba(0,0,0,.35);
-    overflow:hidden;box-shadow:inset 0 0 0 1px rgba(215,183,106,.25);
+    position:relative;box-shadow:inset 0 0 0 1px rgba(215,183,106,.25);
   }
   .op-fill{
     height:100%;border-radius:99px;
     background:linear-gradient(90deg,var(--pk-gold-dark),var(--pk-gold-light));
     transition:width .3s ease;
+  }
+  .op-ball{
+    position:absolute;top:50%;width:20px;height:20px;left:0;
+    transform:translateY(-50%);border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, #fffbe8, #f3dfa0 42%, #d7b76a 78%, #a9813f 100%);
+    box-shadow:0 1px 4px rgba(0,0,0,.45);
+    opacity:0;z-index:2;pointer-events:none;
+  }
+  .op-ball::before,.op-ball::after{
+    content:'';position:absolute;width:2.5px;height:2.5px;border-radius:50%;
+    background:rgba(120,90,30,.55);
+  }
+  .op-ball::before{top:5px;left:7px;}
+  .op-ball::after{bottom:5px;right:6px;}
+  .op-ball-rolling{animation:opBallSpin .8s linear;}
+  @keyframes opBallSpin{
+    from{transform:translateY(-50%) rotate(0deg);}
+    to{transform:translateY(-50%) rotate(-540deg);}
+  }
+  .op-ball-merge{
+    transform:translateY(-50%) scale(1.5);
+    transition:transform .25s ease, opacity .25s ease;
   }
   .op-stats{
     display:flex;justify-content:space-between;margin-top:8px;
@@ -1014,7 +1036,10 @@
         <span class="op-label">總進度（全場館）</span>
         <span class="op-pct" id="op-pct">0%</span>
       </div>
-      <div class="op-track"><div class="op-fill" id="op-fill" style="width:0%"></div></div>
+      <div class="op-track">
+        <div class="op-fill" id="op-fill" style="width:0%"></div>
+        <div class="op-ball" id="op-ball"></div>
+      </div>
       <div class="op-stats">
         <span>已完成 <b id="op-done">0</b> / <span id="op-total">0</span> 場</span>
         <span>待輸入 <b id="op-pending">0</b> 場</span>
@@ -2190,6 +2215,34 @@ function copyResult(){
    SCHEDULE CSV LOADING (for home page badges)
 ═══════════════════════════════════════════ */
 
+let _opLastDone = null;
+
+function rollOpBallTo(pct){
+  const ball = document.getElementById('op-ball');
+  const fill = document.getElementById('op-fill');
+  if (!ball || !fill) { if (fill) fill.style.width = pct + '%'; return; }
+
+  ball.style.transition = 'none';
+  ball.classList.remove('op-ball-rolling','op-ball-merge');
+  ball.style.left = 'calc(100% - 20px)';
+  ball.style.opacity = '1';
+  void ball.offsetWidth;
+
+  ball.style.transition = 'left .8s cubic-bezier(.25,.85,.35,1.15)';
+  ball.style.left = `calc(${pct}% - 10px)`;
+  ball.classList.add('op-ball-rolling');
+
+  setTimeout(() => {
+    fill.style.width = pct + '%';
+    ball.classList.remove('op-ball-rolling');
+    ball.classList.add('op-ball-merge');
+    setTimeout(() => {
+      ball.style.opacity = '0';
+      ball.classList.remove('op-ball-merge');
+    }, 260);
+  }, 800);
+}
+
 function updateHomeBadges(){
   const hint=document.getElementById('no-schedule-hint');
   const hasData=scheduleMatches.length>0;
@@ -2221,10 +2274,15 @@ function updateHomeBadges(){
       const pct = Math.round(done / total * 100);
       opWrap.style.display = '';
       document.getElementById('op-pct').textContent = pct + '%';
-      document.getElementById('op-fill').style.width = pct + '%';
       document.getElementById('op-done').textContent = done;
       document.getElementById('op-total').textContent = total;
       document.getElementById('op-pending').textContent = pending;
+      if (_opLastDone !== null && done > _opLastDone) {
+        rollOpBallTo(pct);
+      } else {
+        document.getElementById('op-fill').style.width = pct + '%';
+      }
+      _opLastDone = done;
     } else {
       opWrap.style.display = 'none';
     }
