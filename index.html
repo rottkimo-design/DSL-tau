@@ -235,14 +235,15 @@
   }
   .op-ball::before{top:5px;left:7px;}
   .op-ball::after{bottom:5px;right:6px;}
-  .op-ball-rolling{animation:opBallSpin .8s linear;}
-  @keyframes opBallSpin{
-    from{transform:translateY(-50%) rotate(0deg);}
-    to{transform:translateY(-50%) rotate(-540deg);}
+  .op-ball-rolling{animation:opBallRoll .5s cubic-bezier(.3,.9,.4,1);}
+  @keyframes opBallRoll{
+    0%{transform:translateY(-50%) rotate(0deg);}
+    55%{transform:translateY(-68%) rotate(-360deg);}
+    100%{transform:translateY(-50%) rotate(-480deg);}
   }
   .op-ball-merge{
     transform:translateY(-50%) scale(1.5);
-    transition:transform .25s ease, opacity .25s ease;
+    transition:transform .18s ease, opacity .18s ease;
   }
   .op-stats{
     display:flex;justify-content:space-between;margin-top:8px;
@@ -2256,7 +2257,7 @@ function rollOpBallTo(pct){
   ball.style.opacity = '1';
   void ball.offsetWidth;
 
-  ball.style.transition = 'left .8s cubic-bezier(.25,.85,.35,1.15)';
+  ball.style.transition = 'left .5s cubic-bezier(.3,.7,.4,1)';
   ball.style.left = `calc(${pct}% - 10px)`;
   ball.classList.add('op-ball-rolling');
 
@@ -2267,8 +2268,8 @@ function rollOpBallTo(pct){
     setTimeout(() => {
       ball.style.opacity = '0';
       ball.classList.remove('op-ball-merge');
-    }, 260);
-  }, 800);
+    }, 180);
+  }, 500);
 }
 
 function updateHomeBadges(){
