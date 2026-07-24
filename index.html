@@ -80,7 +80,7 @@
     font-family:var(--pk-font);
     color:var(--pk-gold-light);background:transparent;border:none;cursor:pointer;
     border-radius:999px;border-bottom:none;margin-bottom:0;transition:all .2s;
-    opacity:.75;
+    opacity:.75;touch-action:manipulation;
   }
   .tab-btn.active{
     color:var(--pk-bg1);background:linear-gradient(160deg,var(--pk-gold-light),var(--pk-gold));
@@ -830,6 +830,8 @@
 .rk-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .rk-table { width: 100%; min-width: 640px; border-collapse: collapse; background: var(--pk-card);
   border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.06); border:1px solid var(--pk-line-soft); }
+.rk-table.rk-table-compact { min-width: 0; }
+.rk-table-compact th:nth-child(2), .rk-table-compact td:nth-child(2) { text-align: right; }
 .rk-table th {
   background: var(--pk-parchment); padding: 10px 8px; font-size: 19px; font-weight: 700;
   color: var(--muted); text-align: center; border-bottom: 1px solid var(--pk-line-soft); letter-spacing: .3px;
@@ -952,15 +954,13 @@
 <div class="top-header">
   <div class="header-row">
     <h1><img src="/icon-paddle.png" class="app-icon" alt=""><span id="app-title-text">MCVS 分數登記</span></h1>
-    <div id="fb-sync-badge" onclick="toggleDslDebug()" style="display:none;font-size:18px;font-weight:600;padding:3px 10px;border-radius:999px;transition:all 0.3s;cursor:pointer;"></div>
+    <div id="fb-sync-badge" style="display:none;font-size:18px;font-weight:600;padding:3px 10px;border-radius:999px;transition:all 0.3s;"></div>
   </div>
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-record" onclick="switchTab('record')">📝 登記</button>
-    <button class="tab-btn"        id="tab-view"   onclick="switchTab('view')">📊 成績</button>
+    <button class="tab-btn"        id="tab-view"   onclick="handleViewTabTap()">📊 成績</button>
   </div>
 </div>
-
-<pre id="dsl-debug-panel" style="display:none;position:fixed;top:8px;left:8px;right:8px;max-height:70vh;overflow:auto;z-index:9999;background:rgba(0,0,0,.92);color:#7CFC7C;font-size:11px;line-height:1.5;padding:10px;border-radius:10px;white-space:pre-wrap;word-break:break-all;"></pre>
 
 <!-- ══════════ PAGE: 登記 ══════════ -->
 <div class="page active" id="page-record">
@@ -1398,6 +1398,21 @@ function switchTab(tab) {
     document.getElementById('tab-'+t).classList.toggle('active', t===tab);
   });
   if (tab==='view' && !viewMatches.length) autoLoadView();
+}
+
+/* ── 連續點擊「成績」4 次切換簡易模式（只顯示 名字 + DUPR Score）── */
+let _rkTapCount = 0;
+let _rkTapTimer = null;
+function handleViewTabTap() {
+  switchTab('view');
+  _rkTapCount++;
+  clearTimeout(_rkTapTimer);
+  _rkTapTimer = setTimeout(() => { _rkTapCount = 0; }, 800);
+  if (_rkTapCount >= 4) {
+    _rkTapCount = 0;
+    _rkCompactMode = !_rkCompactMode;
+    renderViewTab();
+  }
 }
 
 /* ── Section ── */
@@ -2274,6 +2289,7 @@ function autoLoadView(){
 }
 /* ── 成績排名 ── */
 let _rkCourt = 'all';
+let _rkCompactMode = false;
 
 function setRkCourt(c) {
   _rkCourt = c;
@@ -2318,6 +2334,22 @@ function renderViewTab() {
   const rows = Object.entries(stats)
     .map(([name, s]) => ({name, ...s, diff: s.pf - s.pa}))
     .sort((a, b) => b.wins - a.wins || b.diff - a.diff);
+
+  if (_rkCompactMode) {
+    wrap.innerHTML = `
+      <div class="rk-table-scroll">
+      <table class="rk-table rk-table-compact">
+        <thead><tr><th>選手</th><th>DUPR Score</th></tr></thead>
+        <tbody>
+          ${rows.map(r => `<tr>
+            <td style="text-align:left;font-weight:600">${esc(r.name)}</td>
+            <td>—</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      </div>`;
+    return;
+  }
 
   const medalCls = i => ['gold','silver','bronze'][i] ?? 'other';
   const diffHtml = d => d > 0
@@ -3023,25 +3055,6 @@ async function saveQrImage() {
       });
   }
 
-  // ── 除錯記錄（點兩下右上角同步徽章可查看，不需接電腦偵錯）──
-  window._dslDebugLog = [];
-  function dslLog(msg) {
-    const line = `[${new Date().toLocaleTimeString('zh-TW',{hour12:false})}] ${msg}`;
-    window._dslDebugLog.push(line);
-    if (window._dslDebugLog.length > 80) window._dslDebugLog.shift();
-    const panel = document.getElementById('dsl-debug-panel');
-    if (panel && panel.style.display !== 'none') panel.textContent = window._dslDebugLog.join('\n');
-  }
-  window.toggleDslDebug = function(){
-    const panel = document.getElementById('dsl-debug-panel');
-    if (!panel) return;
-    const show = panel.style.display === 'none';
-    panel.style.display = show ? 'block' : 'none';
-    if (show) panel.textContent = window._dslDebugLog.join('\n') || '(尚無記錄)';
-  };
-  dslLog(`裝置：${navigator.userAgent}`);
-  dslLog(`場地 VENUE_ID=${VENUE_ID}`);
-
   // ── 初始化 Firebase ────────────────────────────────────────
   try {
     firebase.initializeApp(firebaseConfig);
@@ -3050,12 +3063,9 @@ async function saveQrImage() {
     badgeConnecting();
 
     // 匿名登入（讓 Firebase Security Rules 可以做 auth != null 驗證）
-    firebase.auth().signInAnonymously()
-      .then(cred => dslLog(`✅ 匿名登入成功 uid=${cred.user.uid}`))
-      .catch(err => {
-        console.warn('Firebase anonymous auth failed:', err);
-        dslLog(`❌ 匿名登入失敗 code=${err.code} msg=${err.message}`);
-      });
+    firebase.auth().signInAnonymously().catch(err => {
+      console.warn('Firebase anonymous auth failed:', err);
+    });
 
     // 暴露 db 供 submitScore() 寫回使用
     window._fbDb = db;
@@ -3069,35 +3079,32 @@ async function saveQrImage() {
       if (!keys.includes(VENUE_ID)) {
         const ciMatch = keys.find(k => k.toLowerCase() === VENUE_ID.toLowerCase());
         if (ciMatch) {
-          dslLog(`⚠️ 場地大小寫不符，網址帶的是「${VENUE_ID}」，已自動校正為「${ciMatch}」`);
           VENUE_ID = ciMatch;
           window._ntcpaVenueId = VENUE_ID;
         } else {
-          dslLog(`❌ 找不到符合「${VENUE_ID}」的場地（不分大小寫），資料庫現有場地：${keys.join('、') || '(無)'}`);
+          console.warn(`找不到符合「${VENUE_ID}」的場地，資料庫現有場地：`, keys);
         }
       }
       attachVenueListeners(db);
     }, err => {
-      dslLog(`❌ 場地清單讀取失敗 code=${err.code} msg=${err.message}，改用原始 VENUE_ID 繼續嘗試`);
+      console.warn('場地清單讀取失敗:', err);
       attachVenueListeners(db);
     });
   } catch(e) {
     console.warn('Firebase init failed:', e);
-    dslLog(`❌ Firebase 初始化整個失敗：${e.message}`);
   }
 
   function attachVenueListeners(db) {
     // 先讀取場地名稱
     db.ref(`ntcpa/venues/${VENUE_ID}/config`).once('value', snap => {
       const cfg = snap.val();
-      dslLog(`config 讀取完成，有資料=${!!cfg}`);
       if (cfg && cfg.name) {
         ntcpaVenueName = cfg.name;
         window._ntcpaVenueName = cfg.name;
         document.getElementById('app-title-text').textContent = `${cfg.name} 分數登記`;
         document.title = `${cfg.name} 分數登記`;
       }
-    }, err => dslLog(`❌ config 讀取失敗 code=${err.code} msg=${err.message}`));
+    }, err => console.warn('config 讀取失敗:', err));
 
     // ── 監聽 NTCPA 廣播通知 ──
     window._notifyRef = db.ref(`ntcpa/venues/${VENUE_ID}/notify`);
@@ -3131,8 +3138,7 @@ async function saveQrImage() {
     db.ref(`ntcpa/venues/${VENUE_ID}/data`).on('value',
       snap => {
         const data = snap.val();
-        if (!data) { dslLog('❌ data 監聽觸發但 snap.val() 是 null（路徑可能無資料）'); badgeOffline(); return; }
-        dslLog(`✅ data 監聽觸發，matches=${toArr(data.matches).length} players=${toArr(data.players).length}`);
+        if (!data) { badgeOffline(); return; }
 
         // 建立 ntcpaId → firebase array index 索引表
         const rawMatches = toArr(data.matches);
@@ -3193,16 +3199,13 @@ async function saveQrImage() {
       },
       err => {
         console.warn('Firebase sync error:', err);
-        dslLog(`❌ data 監聽錯誤 code=${err.code} msg=${err.message}`);
         badgeOffline();
       }
     );
 
     // 連線狀態監測
     db.ref('.info/connected').on('value', snap => {
-      const connected = !!snap.val();
-      dslLog(`.info/connected = ${connected}`);
-      if (!connected) badgeOffline();
+      if (!snap.val()) badgeOffline();
       else badgeOnline(scheduleMatches.length);
     });
   }
