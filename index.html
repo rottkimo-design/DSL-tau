@@ -780,8 +780,21 @@
 
 /* ── QR Code 頁面 ── */
 .qr-grid {
-  display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 4px;
+  display: grid; grid-template-columns: 1fr; gap: 14px; margin: 4px auto 0;
   max-width: 360px;
+}
+.qr-grid.qr-cols-2 {
+  grid-template-columns: 1fr 1fr;
+  max-width: 760px;
+}
+.qr-cols-toggle{
+  display:none;gap:6px;margin-left:auto;flex-shrink:0;
+}
+@media(min-width:600px){
+  .qr-cols-toggle{display:flex;}
+}
+@media(max-width:599px){
+  .qr-grid.qr-cols-2{grid-template-columns:1fr;max-width:360px;}
 }
 .qr-card {
   background: var(--pk-card); border-radius: var(--radius); box-shadow: 0 2px 10px rgba(28,55,51,.08);
@@ -968,9 +981,13 @@
     <div class="cl-header">
       <button class="back-btn" onclick="showSec('home')">←</button>
       <div class="cl-title">場地 QR Code</div>
+      <div class="qr-cols-toggle">
+        <button class="ct-btn active" id="qr-cols-1-btn" onclick="setQrCols(1)">1 欄</button>
+        <button class="ct-btn" id="qr-cols-2-btn" onclick="setQrCols(2)">2 欄</button>
+      </div>
     </div>
     <div class="qr-grid" id="qr-grid"></div>
-    <button id="qr-save-btn" class="btn btn-blue" style="max-width:360px;margin-top:4px" onclick="saveQrImage()">💾 存成圖片</button>
+    <button id="qr-save-btn" class="btn btn-blue" style="max-width:360px;margin:4px auto 0" onclick="saveQrImage()">💾 存成圖片</button>
     <button class="qr-back-btn" onclick="showSec('home')">← 返回</button>
   </div>
 
@@ -2576,6 +2593,12 @@ function renderQrGrid() {
         <div class="qr-inner">${inner}</div>
       </div>`;
   }).join('');
+}
+
+function setQrCols(n){
+  document.getElementById('qr-grid').classList.toggle('qr-cols-2', n===2);
+  document.getElementById('qr-cols-1-btn').classList.toggle('active', n===1);
+  document.getElementById('qr-cols-2-btn').classList.toggle('active', n===2);
 }
 
 /* ═══════════════════════════════════════
