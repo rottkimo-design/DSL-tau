@@ -206,10 +206,21 @@
   .no-schedule-hint p{color:var(--pk-gold-light);font-size:13px;line-height:1.6;}
 
   .ph-logo{display:flex;justify-content:center;margin-top:20px;padding:0 8px;}
-  .ph-logo img{
-    width:100%;max-width:400px;height:auto;display:block;
+  .ph-logo-wrap{
+    position:relative;width:100%;max-width:400px;container-type:inline-size;
     border-radius:12px;border:1px solid var(--pk-gold-dark);
     box-shadow:0 4px 14px rgba(0,0,0,.35), inset 0 0 0 1px rgba(215,183,106,.25);
+    overflow:hidden;
+  }
+  .ph-logo-wrap img{ width:100%;height:auto;display:block; }
+  /* 蓋掉原圖最下面一行文字，換成 DUPR 賽事 成績登錄（底色取自原圖背景色）*/
+  .ph-logo-overlay{
+    position:absolute;left:28%;top:59.4%;width:72%;height:40.6%;
+    background:rgb(17,86,81);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;letter-spacing:.03em;text-align:center;
+    font-size:20px;
+    font-size:clamp(14px, 5.8cqw, 26px);
   }
 
   /* ════════ COURT LIST — 沿用首頁孔雀深色背景風格 ════════ */
@@ -811,21 +822,24 @@
   body.phone-mode .page{max-width:390px;}
 /* ── 成績排名 ── */
 .rk-court-btn {
-  padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--pk-line-soft);
-  background: var(--pk-card); cursor: pointer; font-size: 13px; font-weight: 600;
+  padding: 10px 20px; border-radius: 999px; border: 1.5px solid var(--pk-line-soft);
+  background: var(--pk-card); cursor: pointer; font-size: 22px; font-weight: 600;
   color: #555; font-family: inherit; transition: all .15s;
 }
 .rk-court-btn.active { background: linear-gradient(160deg,var(--pk-gold-light),var(--pk-gold)); color: var(--pk-bg1); border-color: var(--pk-gold-dark); }
-.rk-table { width: 100%; border-collapse: collapse; background: var(--pk-card);
+.rk-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.rk-table { width: 100%; min-width: 640px; border-collapse: collapse; background: var(--pk-card);
   border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.06); border:1px solid var(--pk-line-soft); }
 .rk-table th {
-  background: var(--pk-parchment); padding: 10px 12px; font-size: 12px; font-weight: 700;
+  background: var(--pk-parchment); padding: 10px 8px; font-size: 19px; font-weight: 700;
   color: var(--muted); text-align: center; border-bottom: 1px solid var(--pk-line-soft); letter-spacing: .3px;
+  white-space: nowrap;
 }
 .rk-table th:nth-child(2) { text-align: left; }
 .rk-table td {
-  padding: 12px 12px; font-size: 14px; color: var(--text);
+  padding: 12px 8px; font-size: 26px; color: var(--text);
   text-align: center; border-bottom: 1px solid var(--pk-line-soft);
+  white-space: nowrap;
 }
 .rk-table td:nth-child(2) { text-align: left; font-weight: 600; }
 .rk-table tr:last-child td { border-bottom: none; }
@@ -833,7 +847,7 @@
 .rk-table tr:nth-child(2) td { background: rgba(192,192,192,.04); }
 .rk-table tr:nth-child(3) td { background: rgba(205,127,50,.03); }
 .rk-rank { display:inline-flex;align-items:center;justify-content:center;
-  width:26px;height:26px;border-radius:50%;font-weight:800;font-size:13px; }
+  width:40px;height:40px;border-radius:50%;font-weight:800;font-size:22px; }
 .rk-rank.gold   { background:#ffd700;color:#7a5c00; }
 .rk-rank.silver { background:#d0d0d0;color:#555; }
 .rk-rank.bronze { background:#cd7f32;color:#fff; }
@@ -1004,7 +1018,10 @@
     </div>
 
     <div class="ph-logo">
-      <img src="/ntcpa-logo.jpg" alt="新北市匹克球協會 NTCPA">
+      <div class="ph-logo-wrap">
+        <img src="/ntcpa-logo.jpg" alt="新北市匹克球協會 NTCPA">
+        <div class="ph-logo-overlay">DUPR 賽事 成績登錄</div>
+      </div>
     </div>
   </div>
 
@@ -2308,6 +2325,7 @@ function renderViewTab() {
     : d < 0 ? `<span class="rk-diff-neg">${d}</span>` : `<span style="color:#aaa">0</span>`;
 
   wrap.innerHTML = `
+    <div class="rk-table-scroll">
     <table class="rk-table">
       <thead><tr>
         <th>名次</th><th>選手</th><th>勝</th><th>負</th><th>得分</th><th>失分</th><th>分差</th>
@@ -2323,7 +2341,8 @@ function renderViewTab() {
           <td>${diffHtml(r.diff)}</td>
         </tr>`).join('')}
       </tbody>
-    </table>`;
+    </table>
+    </div>`;
 }
 
 /* ── 場次表場地選擇器（孔雀深色主題）── */
