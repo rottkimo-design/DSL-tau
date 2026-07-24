@@ -858,7 +858,6 @@
 .rk-rank.gold   { background:#ffd700;color:#7a5c00; }
 .rk-rank.silver { background:#d0d0d0;color:#555; }
 .rk-rank.bronze { background:#cd7f32;color:#fff; }
-.rk-rank.other  { background:#f1f5f9;color:#888; }
 .rk-diff-pos { color: var(--green-dark); font-weight: 700; }
 .rk-diff-neg { color: var(--red); font-weight: 700; }
 .rk-no-data { text-align:center;padding:40px 20px;color:var(--muted);font-size:14px; }
@@ -2340,7 +2339,10 @@ function renderViewTab() {
     .map(([name, s]) => ({name, ...s, diff: s.pf - s.pa}))
     .sort((a, b) => b.wins - a.wins || b.diff - a.diff);
 
-  const medalCls = i => ['gold','silver','bronze'][i] ?? 'other';
+  const medalCls = i => ['gold','silver','bronze'][i];
+  const rankHtml = i => medalCls(i)
+    ? `<span class="rk-rank ${medalCls(i)}">${i+1}</span>`
+    : (i+1);
   const diffHtml = d => d > 0
     ? `<span class="rk-diff-pos">+${d}</span>`
     : d < 0 ? `<span class="rk-diff-neg">${d}</span>` : `<span style="color:#aaa">0</span>`;
@@ -2356,7 +2358,7 @@ function renderViewTab() {
       </tr></thead>
       <tbody>
         ${rows.map((r,i) => `<tr>
-          <td><span class="rk-rank ${medalCls(i)}">${i+1}</span></td>
+          <td>${rankHtml(i)}</td>
           <td>${nameHtml(r.name)}</td>
           <td style="color:var(--green-dark);font-weight:700">${r.wins}</td>
           <td style="color:var(--red)">${r.losses}</td>
