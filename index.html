@@ -2524,7 +2524,15 @@ function showSchedulePicker() {
   title.style.cssText = 'font-family:var(--pk-font);font-size:18px;font-weight:800;text-align:center;margin-bottom:4px;color:var(--pk-gold-light);text-shadow:0 1px 0 rgba(0,0,0,.35);';
   box.appendChild(title);
 
-  const clrs = {1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22'};
+  const clrs = {1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22',all:'#d7b76a'};
+  const allBtn = document.createElement('button');
+  allBtn.textContent = 'ALL 場地';
+  allBtn.style.cssText = `padding:14px;border-radius:12px;border:2px solid ${clrs.all};background:rgba(0,0,0,.22);font-size:16px;font-weight:700;cursor:pointer;color:${clrs.all};transition:background .15s;`;
+  allBtn.onmouseenter = () => allBtn.style.background = 'rgba(0,0,0,.4)';
+  allBtn.onmouseleave = () => allBtn.style.background = 'rgba(0,0,0,.22)';
+  allBtn.onclick = () => { document.body.removeChild(ov); printSchedule('all'); };
+  box.appendChild(allBtn);
+
   [1,2,3,4].forEach(c => {
     const btn = document.createElement('button');
     btn.textContent = `場地 ${c}`;
@@ -2552,7 +2560,7 @@ const _COURT_CLR = {1:'#e74c3c',2:'#3498db',3:'#2ecc71',4:'#e67e22'};
 async function printSchedule(courtFilter) {
   if (!courtFilter) return;
 
-  const courts = [courtFilter];
+  const courts = courtFilter === 'all' ? [1,2,3,4] : [courtFilter];
 
   /* ── 版面常數 ── */
   const SC=2, CW=900, MG=16, RH=60, HDR=52, TITL=70, GAP=20;
@@ -2675,7 +2683,7 @@ async function printSchedule(courtFilter) {
 
   /* ── 輸出 ── */
   const dataUrl=cv.toDataURL('image/png');
-  const filename = `${window._ntcpaVenueName||'DSL'}_場地${courtFilter}_場次表.png`;
+  const filename = `${window._ntcpaVenueName||'DSL'}_場地${courtFilter==='all'?'全部':courtFilter}_場次表.png`;
   _showSaveOverlay(dataUrl, filename);
 }
 
