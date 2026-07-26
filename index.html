@@ -2439,11 +2439,15 @@ let _duprScores = null; // {byId: {DUPRID: {score, games}}}
 let _duprScoresLoading = false;
 
 function lookupDuprScore(name, duprId) {
-  if (!_duprScores) return '…';
   const id = (duprId || '').trim().toUpperCase();
-  const entry = id && _duprScores.byId[id];
-  if (!entry) return '—';
-  return entry.games ? `${entry.score}<span class="rk-dupr-games">/${entry.games}</span>` : entry.score;
+  if (!id) return '';
+  const idHtml = esc(id);
+  if (!_duprScores) return `${idHtml} …`;
+  const entry = _duprScores.byId[id];
+  if (!entry) return `${idHtml} —`;
+  return entry.games
+    ? `${idHtml} ${entry.score}<span class="rk-dupr-games">/${entry.games}</span>`
+    : `${idHtml} ${entry.score}`;
 }
 
 async function loadDuprScores() {
@@ -2523,9 +2527,13 @@ function renderViewTab() {
   const diffHtml = d => d > 0
     ? `<span class="rk-diff-pos">+${d}</span>`
     : d < 0 ? `<span class="rk-diff-neg">${d}</span>` : `<span style="color:#aaa">0</span>`;
-  const nameHtml = (name, duprId) => _rkCompactMode
-    ? `${esc(stripPrefix(name))} <span class="rk-dupr">DUPR ${lookupDuprScore(name, duprId)}</span>`
-    : esc(name);
+  const nameHtml = (name, duprId) => {
+    if (!_rkCompactMode) return esc(name);
+    const dupr = lookupDuprScore(name, duprId);
+    return dupr
+      ? `${esc(stripPrefix(name))} <span class="rk-dupr">${dupr}</span>`
+      : esc(stripPrefix(name));
+  };
 
   wrap.innerHTML = `
     <div class="rk-table-scroll">
