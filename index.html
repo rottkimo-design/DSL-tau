@@ -903,6 +903,7 @@
 .rk-rank { display:inline-flex;align-items:center;justify-content:center;
   width:40px;height:40px;border-radius:50%;font-weight:800;font-size:22px; }
 .rk-dupr { font-size:.65em;font-weight:600;color:var(--pk-gold-dark);white-space:nowrap; }
+.rk-dupr-games { opacity:.6;font-weight:400; }
 @media (max-width: 480px) {
   .rk-table { min-width: 0; }
   .rk-table th { font-size: 15px; padding: 9px 10px; }
@@ -2432,25 +2433,36 @@ function autoLoadView(){
 let _rkCourt = 'all';
 let _rkCompactMode = false;
 
-/* ── DUPR 積分（透過 /api/dupr-scores 讀取試算表）── */
-let _duprScores = null; // {byId, byName}
+/* ── DUPR 積分（呼叫 ntcpa-dupr-score 現成的 DUPR 分數 API）── */
+const DUPR_SCORE_API = 'https://ntcpa-dupr-score.vercel.app/api/dupr-scores';
+let _duprScores = null; // {byId: {DUPRID: {score, games}}}
 let _duprScoresLoading = false;
 
 function lookupDuprScore(name, duprId) {
   if (!_duprScores) return '…';
   const id = (duprId || '').trim().toUpperCase();
-  if (id && _duprScores.byId[id]) return _duprScores.byId[id];
-  const n = stripPrefix(name || '').trim();
-  if (n && _duprScores.byName[n]) return _duprScores.byName[n];
-  return '—';
+  const entry = id && _duprScores.byId[id];
+  if (!entry) return '—';
+  return entry.games ? `${entry.score}<span class="rk-dupr-games">/${entry.games}</span>` : entry.score;
 }
 
 async function loadDuprScores() {
   if (_duprScores || _duprScoresLoading) return;
   _duprScoresLoading = true;
   try {
-    const res = await fetch('/api/dupr-scores');
-    if (res.ok) _duprScores = await res.json();
+    const res = await fetch(DUPR_SCORE_API);
+    if (res.ok) {
+      const list = await res.json();
+      const byId = {};
+      list.forEach(({duprId, scoreField}) => {
+        const id = (duprId || '').trim().toUpperCase();
+        if (!id) return;
+        const m = /\(\s*([\d.]+|NR)\s*\/\s*([\d.]+|NR)/.exec(scoreField || '');
+        if (!m || m[1] === 'NR') return; // 尚無足夠場次評分，不覆蓋已有資料
+        byId[id] = {score: m[1], games: m[2] === 'NR' ? '' : m[2]};
+      });
+      _duprScores = {byId};
+    }
   } catch (e) {
     console.warn('DUPR 積分讀取失敗', e);
   } finally {
@@ -2512,7 +2524,7 @@ function renderViewTab() {
     ? `<span class="rk-diff-pos">+${d}</span>`
     : d < 0 ? `<span class="rk-diff-neg">${d}</span>` : `<span style="color:#aaa">0</span>`;
   const nameHtml = (name, duprId) => _rkCompactMode
-    ? `${esc(stripPrefix(name))} <span class="rk-dupr">DUPR ${esc(lookupDuprScore(name, duprId))}</span>`
+    ? `${esc(stripPrefix(name))} <span class="rk-dupr">DUPR ${lookupDuprScore(name, duprId)}</span>`
     : esc(name);
 
   wrap.innerHTML = `
