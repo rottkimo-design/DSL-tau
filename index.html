@@ -903,8 +903,15 @@
 .rk-rank { display:inline-flex;align-items:center;justify-content:center;
   width:40px;height:40px;border-radius:50%;font-weight:800;font-size:22px; }
 .rk-name-row { display:flex;align-items:baseline;justify-content:space-between;gap:12px; }
-.rk-dupr { font-size:1em;font-weight:700;color:var(--pk-gold-light);white-space:nowrap; }
-.rk-dupr-games { opacity:.75;font-weight:400; }
+.rk-dupr {
+  display:inline-grid;grid-template-columns:7.5ch max-content 6ch max-content 4ch;
+  font-size:1em;font-weight:700;color:var(--pk-gold-light);white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.rk-dupr-id { text-align:left; }
+.rk-dupr-score { text-align:right; }
+.rk-dupr-games { text-align:right;opacity:.75;font-weight:400; }
+.rk-dupr-sep { text-align:center;opacity:.4;font-weight:400; }
 @media (max-width: 480px) {
   .rk-table { min-width: 0; }
   .rk-table th { font-size: 15px; padding: 9px 10px; }
@@ -2443,13 +2450,14 @@ function lookupDuprScore(name, duprId) {
   const id = (duprId || '').trim().toUpperCase();
   if (!id) return '';
   const idHtml = esc(id);
-  if (!_duprScores) return `${idHtml} …`;
-  const entry = _duprScores.byId[id];
-  if (!entry) return `${idHtml} —`;
-  const score = Number(entry.score).toFixed(3);
-  return entry.games
-    ? `${idHtml} ${score}<span class="rk-dupr-games">/${entry.games}</span>`
-    : `${idHtml} ${score}`;
+  const entry = _duprScores && _duprScores.byId[id];
+  const score = !_duprScores ? '…' : entry ? Number(entry.score).toFixed(3) : '—';
+  const games = !_duprScores ? '…' : entry && entry.games ? entry.games : '—';
+  return `<span class="rk-dupr">`
+    + `<span class="rk-dupr-id">${idHtml}</span><span class="rk-dupr-sep">/</span>`
+    + `<span class="rk-dupr-score">${score}</span><span class="rk-dupr-sep">/</span>`
+    + `<span class="rk-dupr-games">${games}</span>`
+    + `</span>`;
 }
 
 async function loadDuprScores() {
@@ -2533,7 +2541,7 @@ function renderViewTab() {
     if (!_rkCompactMode) return esc(name);
     const dupr = lookupDuprScore(name, duprId);
     return dupr
-      ? `<div class="rk-name-row"><span>${esc(stripPrefix(name))}</span><span class="rk-dupr">${dupr}</span></div>`
+      ? `<div class="rk-name-row"><span>${esc(stripPrefix(name))}</span>${dupr}</div>`
       : esc(stripPrefix(name));
   };
 
