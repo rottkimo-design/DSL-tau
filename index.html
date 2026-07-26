@@ -902,7 +902,8 @@
 .rk-table tr:nth-child(3) td { background: rgba(205,127,50,.03); }
 .rk-rank { display:inline-flex;align-items:center;justify-content:center;
   width:40px;height:40px;border-radius:50%;font-weight:800;font-size:22px; }
-.rk-dupr { display:block;margin-top:2px;font-size:1em;font-weight:700;color:var(--pk-gold-light);white-space:nowrap; }
+.rk-name-row { display:flex;align-items:baseline;justify-content:space-between;gap:12px; }
+.rk-dupr { font-size:1em;font-weight:700;color:var(--pk-gold-light);white-space:nowrap; }
 .rk-dupr-games { opacity:.75;font-weight:400; }
 @media (max-width: 480px) {
   .rk-table { min-width: 0; }
@@ -2532,7 +2533,7 @@ function renderViewTab() {
     if (!_rkCompactMode) return esc(name);
     const dupr = lookupDuprScore(name, duprId);
     return dupr
-      ? `${esc(stripPrefix(name))} <span class="rk-dupr">${dupr}</span>`
+      ? `<div class="rk-name-row"><span>${esc(stripPrefix(name))}</span><span class="rk-dupr">${dupr}</span></div>`
       : esc(stripPrefix(name));
   };
 
