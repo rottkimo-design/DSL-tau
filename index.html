@@ -1487,6 +1487,7 @@ function handleViewTabTap() {
   if (_rkTapCount >= 4) {
     _rkTapCount = 0;
     _rkCompactMode = !_rkCompactMode;
+    if (_rkCompactMode) loadDuprScores();
     renderViewTab();
   }
 }
@@ -2431,6 +2432,33 @@ function autoLoadView(){
 let _rkCourt = 'all';
 let _rkCompactMode = false;
 
+/* ── DUPR 積分（透過 /api/dupr-scores 讀取試算表）── */
+let _duprScores = null; // {byId, byName}
+let _duprScoresLoading = false;
+
+function lookupDuprScore(name, duprId) {
+  if (!_duprScores) return '…';
+  const id = (duprId || '').trim().toUpperCase();
+  if (id && _duprScores.byId[id]) return _duprScores.byId[id];
+  const n = stripPrefix(name || '').trim();
+  if (n && _duprScores.byName[n]) return _duprScores.byName[n];
+  return '—';
+}
+
+async function loadDuprScores() {
+  if (_duprScores || _duprScoresLoading) return;
+  _duprScoresLoading = true;
+  try {
+    const res = await fetch('/api/dupr-scores');
+    if (res.ok) _duprScores = await res.json();
+  } catch (e) {
+    console.warn('DUPR 積分讀取失敗', e);
+  } finally {
+    _duprScoresLoading = false;
+    if (_rkCompactMode) renderViewTab();
+  }
+}
+
 function setRkCourt(c) {
   _rkCourt = c;
   document.querySelectorAll('.rk-court-btn').forEach(b =>
@@ -2459,16 +2487,17 @@ function renderViewTab() {
     const aScore = g1.a || 0, bScore = g1.b || 0;
     const aWin = aScore > bScore;
 
-    const addPlayer = (name, scored, lost, won) => {
+    const addPlayer = (name, duprId, scored, lost, won) => {
       if (!name) return;
-      if (!stats[name]) stats[name] = {wins:0, losses:0, pf:0, pa:0};
+      if (!stats[name]) stats[name] = {wins:0, losses:0, pf:0, pa:0, duprId:''};
       stats[name].pf += scored;
       stats[name].pa += lost;
+      if (duprId) stats[name].duprId = duprId;
       if (won) stats[name].wins++; else stats[name].losses++;
     };
 
-    [m.playerA1, m.playerA2].forEach(p => addPlayer(p, aScore, bScore, aWin));
-    [m.playerB1, m.playerB2].forEach(p => addPlayer(p, bScore, aScore, !aWin));
+    [[m.playerA1,m.playerA1DuprId],[m.playerA2,m.playerA2DuprId]].forEach(([p,d]) => addPlayer(p, d, aScore, bScore, aWin));
+    [[m.playerB1,m.playerB1DuprId],[m.playerB2,m.playerB2DuprId]].forEach(([p,d]) => addPlayer(p, d, bScore, aScore, !aWin));
   });
 
   const rows = Object.entries(stats)
@@ -2482,8 +2511,8 @@ function renderViewTab() {
   const diffHtml = d => d > 0
     ? `<span class="rk-diff-pos">+${d}</span>`
     : d < 0 ? `<span class="rk-diff-neg">${d}</span>` : `<span style="color:#aaa">0</span>`;
-  const nameHtml = name => _rkCompactMode
-    ? `${esc(stripPrefix(name))} <span class="rk-dupr">DUPR —</span>`
+  const nameHtml = (name, duprId) => _rkCompactMode
+    ? `${esc(stripPrefix(name))} <span class="rk-dupr">DUPR ${esc(lookupDuprScore(name, duprId))}</span>`
     : esc(name);
 
   wrap.innerHTML = `
@@ -2495,7 +2524,7 @@ function renderViewTab() {
       <tbody>
         ${rows.map((r,i) => `<tr>
           <td>${rankHtml(i)}</td>
-          <td>${nameHtml(r.name)}</td>
+          <td>${nameHtml(r.name, r.duprId)}</td>
           <td style="color:var(--green-dark);font-weight:700">${r.wins}</td>
           <td style="color:var(--red)">${r.losses}</td>
           <td>${r.pf}</td>
