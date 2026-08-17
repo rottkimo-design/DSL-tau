@@ -744,17 +744,17 @@
   .qs-loser-score-label{font-size:23px;font-weight:900;color:#c53030;letter-spacing:.5px;line-height:1.45;}
   .qs-loser-word{font-size:1.4em;color:#ff2d2d;}
   .qs-loser-grid{
-    display:grid;gap:7px;width:100%;
+    display:grid;row-gap:14px;column-gap:9px;width:100%;
     grid-template-columns:repeat(13,1fr);
   }
   /* 下排往右錯開半格，降低點錯上下排的機率 */
   .qs-loser-offset{grid-column:1 / span 1;}
   .qs-loser-btn{
     grid-column:span 2;
-    padding:9px 2px;border:none;border-radius:8px;
+    padding:12px 1px;border:none;border-radius:10px;
     background:linear-gradient(180deg,#ff8a80,#e53e3e);
     box-shadow:0 5px 0 #9b1c1c;
-    font-size:16px;font-weight:900;color:#fff;
+    font-size:20px;font-weight:900;color:#fff;
     cursor:pointer;text-align:center;
     transition:transform .08s,box-shadow .08s;user-select:none;
   }
