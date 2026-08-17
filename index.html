@@ -741,12 +741,15 @@
     color:var(--green-dark);
   }
 
-  .qs-loser-score-label{font-size:15px;font-weight:700;color:#c53030;letter-spacing:.3px;}
+  .qs-loser-score-label{font-size:23px;font-weight:900;color:#c53030;letter-spacing:.5px;line-height:1.3;}
   .qs-loser-grid{
     display:grid;gap:7px;width:100%;
-    grid-template-columns:repeat(6,1fr);
+    grid-template-columns:repeat(13,1fr);
   }
+  /* 下排往右錯開半格，降低點錯上下排的機率 */
+  .qs-loser-offset{grid-column:1 / span 1;}
   .qs-loser-btn{
+    grid-column:span 2;
     padding:9px 2px;border:none;border-radius:8px;
     background:linear-gradient(180deg,#ff8a80,#e53e3e);
     box-shadow:0 5px 0 #9b1c1c;
@@ -800,7 +803,7 @@
   #sec-quick .qs-loser-card .qs-sb-name,
   #sec-quick .qs-loser-card-role,
   #sec-quick .qs-lose-label{color:#ff9b9b;}
-  #sec-quick .qs-loser-score-label{color:var(--pk-gold-light);opacity:.85;}
+  #sec-quick .qs-loser-score-label{color:var(--pk-gold-light);}
   #sec-quick .qs-loser-btn{
     background:rgba(0,0,0,.18);
     border:1.5px solid var(--pk-gold-dark);
@@ -1219,7 +1222,7 @@
         <!-- 落敗隊伍卡片（含分數格）-->
         <div class="qs-loser-card">
           <div class="qs-sb-name" id="qs-sb-lname">—</div>
-          <div class="qs-loser-score-label">落敗隊伍分數 ↓</div>
+          <div class="qs-loser-score-label">👇 請點選「落敗隊伍」分數</div>
           <div class="qs-loser-grid" id="qs-loser-grid"></div>
         </div>
       </div>
@@ -1678,11 +1681,15 @@ function qsAdjWin(d){
 
 function qsBuildLoserGrid(){
   const max = qs.winScore - 1;
+  const cols = Math.ceil((max + 1) / 2);   // 固定排成兩排
   let html = '';
-  for(let i=0;i<=max;i++){
+  for(let i=max;i>=0;i--){               // 由高到低
+    if(i === max - cols) html += '<span class="qs-loser-offset"></span>';  // 下排錯開半格
     html+=`<button class="qs-loser-btn" onclick="qsPickLose(${i})">${i}</button>`;
   }
-  document.getElementById('qs-loser-grid').innerHTML = html;
+  const grid = document.getElementById('qs-loser-grid');
+  grid.style.gridTemplateColumns = `repeat(${cols*2+1},1fr)`;
+  grid.innerHTML = html;
 }
 
 function qsPickLose(loseScore){
